@@ -1,0 +1,32 @@
+# Build artifacts
+*.o
+*.a
+*.pyc
+__pycache__/
+*.tab.c
+*.tab.h
+lex.*.c
+semantic.cache
+CNF
+A
+
+# Generated files
+*.tgz
+*.zip
+*.tar.gz
+
+# Temporary files
+*.bak
+*~
+*%
+core
+*.log
+*.tmp
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

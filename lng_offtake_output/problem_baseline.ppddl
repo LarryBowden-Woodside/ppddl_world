@@ -1,0 +1,22 @@
+(define (problem lng-offtake-problem)
+  (:domain lng-offtake)
+  (:objects 
+    train1 train2 - Trains
+    tankA tankB tankC - Tanks
+    vessel - Vessels
+    term_cargo spot_cargo - Cargoes
+    day1 day2 day3 - Time Periods
+  )
+  
+  (:init 
+    (tank_level tankA 100)
+    (tank_level tankB 90)
+    (tank_level tankC 80)
+    (berth_available)
+    (cargo_accepted term_cargo)
+    (cargo_accepted spot_cargo)
+    (hhv_within_spec term_cargo)
+    (hhv_within_spec spot_cargo)
+  )
+
+  (:goal 0.9 (cargo_loaded term_cargo vessel)))

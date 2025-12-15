@@ -1,0 +1,4049 @@
+INFO:root:Loading LNG offtake problem...
+INFO:root:Problem: lng_offtake
+INFO:root:Time horizon: 720 hours (30 days)
+INFO:root:
+================================================================================
+INFO:root:BASELINE APPROACH: Pure LLM Synthesis
+INFO:root:================================================================================
+INFO:root:Generating PPDDL candidates...
+INFO:root:================================================================================
+INFO:root:LLM PROMPT:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:Extract PPDDL types, predicates, and functions from the LNG offtake problem below.
+Focus on:
+- Types: trains, tanks, vessels, cargoes, time periods
+- Predicates: states (tank levels, berth occupied, vessel arrived)
+- Functions: numeric fluents (HHV, volume, revenue, costs)
+
+Problem:
+
+LNG Offtake Optimization Problem
+
+Goal: Maximize value realization over a rolling 30-day horizon by meeting term contract obligations and exploiting probabilistic spot cargo opportunities, while explicitly representing uncertainty in product quality (HHV), vessel arrival times, and spot prices.
+
+Physical Context:
+- Two LNG trains operate in parallel with fixed upstream feed blends:
+  * Train 2 (ConocoPhillips Cascade): 100% Field 2, leaner gas (HHV: 1050-1070 BTU/scf, mean=1060, uncertainty ±10)
+  * Train 1 (Shell Mixed Refrigerant): 41-59% Field 1:Field 2 ratio (HHV: 1080-1100 BTU/scf, mean=1090, uncertainty ±10)
+- Field 2 is ramping up (production increasing 5% per week) while Field 1 ramps down
+- Production rates: Train 1: 4.5 MTPA, Train 2: 5.0 MTPA (maximized subject to maintenance)
+- Storage: 3 tanks (Tank A: 180k m³, Tank B: 180k m³, Tank C: 160k m³)
+- Tank connectivity: Train 1 → Tank A, B; Train 2 → Tank B, C; All tanks → Berth
+- Berth: Single berth with 24hr turnaround time between vessels
+
+Decisions:
+1. Cargo timing: load start/end within laycan windows (term contracts have ±2 day flexibility)
+2. Vessel sequencing and berth assignment (no overlap, 24hr clearance)
+3. Tank withdrawals per cargo (which tanks feed which cargo, respecting connectivity)
+4. Spot cargo acceptance: binary decision per opportunity (5 spot opportunities over horizon)
+5. Operational buffers: maintain 20% tank headroom to absorb ETA variance
+
+Objectives:
+- Primary: Maximize expected net value = revenues - costs - penalties
+- Revenues: Term cargoes ($80M each, 75k m³), Spot cargoes ($85-95M, 70k m³, price uncertain)
+- Costs: Demurrage ($50k/day if loading delayed), boil-off ($200k/day tank holding)
+- Penal...
+INFO:root:--------------------------------------------------------------------------------
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:LLM RESPONSE:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:Based on the LNG offtake optimization problem provided, here are the extracted PPDDL types, predicates, and functions:
+
+### Types
+1. **Trains**
+   - Train 1
+   - Train 2
+
+2. **Tanks**
+   - Tank A
+   - Tank B
+   - Tank C
+
+3. **Vessels**
+   - Vessel (generic type for all vessels)
+
+4. **Cargoes**
+   - Term Cargo
+   - Spot Cargo
+
+5. **Time Periods**
+   - Day (specific time periods within the 30-day horizon)
+
+### Predicates
+1. **Tank Levels**
+   - `tank_level(tank, level)`: Represents the current level of gas in a specific tank.
+   - `tank_full(tank)`: Indicates if a tank is over 95% full.
+   - `tank_min_heel(tank)`: Indicates if a tank has reached its minimum heel of 10%.
+
+2. **Berth Occupancy**
+   - `berth_occupied(vessel)`: Indicates if a vessel is currently occupying the berth.
+   - `berth_available`: Indicates if the berth is available for a new vessel.
+
+3. **Vessel Arrival**
+   - `vessel_arrived(vessel)`: Indicates if a vessel has arrived at the berth.
+   - `vessel_eta(vessel, time)`: Represents the estimated time of arrival for a vessel.
+
+4. **Cargo Status**
+   - `cargo_loaded(cargo)`: Indicates if a cargo has been loaded onto a vessel.
+   - `cargo_timing(cargo, start_time, end_time)`: Represents the timing for loading a specific cargo.
+
+5. **Quality State**
+   - `hhv_within_spec(cargo)`: Indicates if the HHV of a cargo is within the specified range (1055-1095 BTU/scf).
+
+### Functions
+1. **Numeric Fluents**
+   - `HHV(train)`: Represents the Higher Heating Value for a specific train, with uncertainty.
+   - `volume(tank)`: Represents the current volume of LNG in a specific tank.
+   - `revenue(cargo)`: Represents the revenue generated from a specific cargo (term or spot).
+   - `costs(demurrage, boil_off)`: Represents the total costs incurred from demurrage and boil-off.
+   - `penalties(cargo)`: Represents any penalties incurred for off-spec HHV or tank-top risk.
+
+### Summary
+This structured extraction of types, predicates, and functions provides a clear framework for...
+INFO:root:================================================================================
+INFO:root:================================================================================
+INFO:root:LLM PROMPT:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:Extract PPDDL types, predicates, and functions from the LNG offtake problem below.
+Focus on:
+- Types: trains, tanks, vessels, cargoes, time periods
+- Predicates: states (tank levels, berth occupied, vessel arrived)
+- Functions: numeric fluents (HHV, volume, revenue, costs)
+
+Problem:
+
+LNG Offtake Optimization Problem
+
+Goal: Maximize value realization over a rolling 30-day horizon by meeting term contract obligations and exploiting probabilistic spot cargo opportunities, while explicitly representing uncertainty in product quality (HHV), vessel arrival times, and spot prices.
+
+Physical Context:
+- Two LNG trains operate in parallel with fixed upstream feed blends:
+  * Train 2 (ConocoPhillips Cascade): 100% Field 2, leaner gas (HHV: 1050-1070 BTU/scf, mean=1060, uncertainty ±10)
+  * Train 1 (Shell Mixed Refrigerant): 41-59% Field 1:Field 2 ratio (HHV: 1080-1100 BTU/scf, mean=1090, uncertainty ±10)
+- Field 2 is ramping up (production increasing 5% per week) while Field 1 ramps down
+- Production rates: Train 1: 4.5 MTPA, Train 2: 5.0 MTPA (maximized subject to maintenance)
+- Storage: 3 tanks (Tank A: 180k m³, Tank B: 180k m³, Tank C: 160k m³)
+- Tank connectivity: Train 1 → Tank A, B; Train 2 → Tank B, C; All tanks → Berth
+- Berth: Single berth with 24hr turnaround time between vessels
+
+Decisions:
+1. Cargo timing: load start/end within laycan windows (term contracts have ±2 day flexibility)
+2. Vessel sequencing and berth assignment (no overlap, 24hr clearance)
+3. Tank withdrawals per cargo (which tanks feed which cargo, respecting connectivity)
+4. Spot cargo acceptance: binary decision per opportunity (5 spot opportunities over horizon)
+5. Operational buffers: maintain 20% tank headroom to absorb ETA variance
+
+Objectives:
+- Primary: Maximize expected net value = revenues - costs - penalties
+- Revenues: Term cargoes ($80M each, 75k m³), Spot cargoes ($85-95M, 70k m³, price uncertain)
+- Costs: Demurrage ($50k/day if loading delayed), boil-off ($200k/day tank holding)
+- Penal...
+INFO:root:--------------------------------------------------------------------------------
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:LLM RESPONSE:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:Based on the LNG offtake optimization problem provided, here are the extracted PPDDL types, predicates, and functions:
+
+### Types
+1. **Trains**
+   - Train1
+   - Train2
+
+2. **Tanks**
+   - TankA
+   - TankB
+   - TankC
+
+3. **Vessels**
+   - Vessel (generic type for all vessels)
+
+4. **Cargoes**
+   - TermCargo
+   - SpotCargo
+
+5. **TimePeriods**
+   - TimePeriod (generic type for all time periods, e.g., days in the 30-day horizon)
+
+### Predicates
+1. **Tank Levels**
+   - `tank_level(tank, level)` - Represents the current level of a specific tank (e.g., `tank_level(TankA, Level)`).
+
+2. **Berth Occupancy**
+   - `berth_occupied(vessel)` - Indicates whether a specific vessel is currently occupying the berth.
+
+3. **Vessel Arrival**
+   - `vessel_arrived(vessel, time)` - Indicates whether a specific vessel has arrived at the berth at a given time.
+
+4. **Cargo Loading Status**
+   - `cargo_loaded(cargo, vessel, time)` - Indicates whether a specific cargo has been loaded onto a vessel at a given time.
+
+5. **Tank Connectivity**
+   - `tank_connected_to_train(tank, train)` - Indicates if a tank is connected to a specific train for withdrawals.
+
+6. **Quality Specification**
+   - `hhv_within_spec(cargo, hhv_value)` - Indicates whether the HHV of a specific cargo is within the specified quality range.
+
+7. **Operational Buffers**
+   - `operational_buffer(tank)` - Indicates if the operational buffer (20% headroom) is maintained for a specific tank.
+
+### Functions
+1. **HHV (Higher Heating Value)**
+   - `hhv(train)` - Returns the HHV value for a specific train, which may vary based on production conditions.
+
+2. **Volume**
+   - `volume(cargo)` - Returns the volume of a specific cargo (e.g., `volume(TermCargo)` or `volume(SpotCargo)`).
+
+3. **Revenue**
+   - `revenue(cargo)` - Returns the revenue generated from a specific cargo (e.g., `revenue(TermCargo)` or `revenue(SpotCargo)`).
+
+4. **Costs**
+   - `demurrage_cost(vessel, days)` - Calculates the demurrage cost based on the number of days a vessel i...
+INFO:root:================================================================================
+INFO:root:================================================================================
+INFO:root:LLM PROMPT:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:Extract PPDDL types, predicates, and functions from the LNG offtake problem below.
+Focus on:
+- Types: trains, tanks, vessels, cargoes, time periods
+- Predicates: states (tank levels, berth occupied, vessel arrived)
+- Functions: numeric fluents (HHV, volume, revenue, costs)
+
+Problem:
+
+LNG Offtake Optimization Problem
+
+Goal: Maximize value realization over a rolling 30-day horizon by meeting term contract obligations and exploiting probabilistic spot cargo opportunities, while explicitly representing uncertainty in product quality (HHV), vessel arrival times, and spot prices.
+
+Physical Context:
+- Two LNG trains operate in parallel with fixed upstream feed blends:
+  * Train 2 (ConocoPhillips Cascade): 100% Field 2, leaner gas (HHV: 1050-1070 BTU/scf, mean=1060, uncertainty ±10)
+  * Train 1 (Shell Mixed Refrigerant): 41-59% Field 1:Field 2 ratio (HHV: 1080-1100 BTU/scf, mean=1090, uncertainty ±10)
+- Field 2 is ramping up (production increasing 5% per week) while Field 1 ramps down
+- Production rates: Train 1: 4.5 MTPA, Train 2: 5.0 MTPA (maximized subject to maintenance)
+- Storage: 3 tanks (Tank A: 180k m³, Tank B: 180k m³, Tank C: 160k m³)
+- Tank connectivity: Train 1 → Tank A, B; Train 2 → Tank B, C; All tanks → Berth
+- Berth: Single berth with 24hr turnaround time between vessels
+
+Decisions:
+1. Cargo timing: load start/end within laycan windows (term contracts have ±2 day flexibility)
+2. Vessel sequencing and berth assignment (no overlap, 24hr clearance)
+3. Tank withdrawals per cargo (which tanks feed which cargo, respecting connectivity)
+4. Spot cargo acceptance: binary decision per opportunity (5 spot opportunities over horizon)
+5. Operational buffers: maintain 20% tank headroom to absorb ETA variance
+
+Objectives:
+- Primary: Maximize expected net value = revenues - costs - penalties
+- Revenues: Term cargoes ($80M each, 75k m³), Spot cargoes ($85-95M, 70k m³, price uncertain)
+- Costs: Demurrage ($50k/day if loading delayed), boil-off ($200k/day tank holding)
+- Penal...
+INFO:root:--------------------------------------------------------------------------------
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:LLM RESPONSE:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:Based on the LNG offtake problem provided, here are the extracted PPDDL types, predicates, and functions:
+
+### Types
+1. **Trains**
+   - Train1
+   - Train2
+
+2. **Tanks**
+   - TankA
+   - TankB
+   - TankC
+
+3. **Vessels**
+   - Vessel (general type for any vessel)
+
+4. **Cargoes**
+   - TermCargo
+   - SpotCargo
+
+5. **TimePeriods**
+   - Day (representing each day in the 30-day horizon)
+
+### Predicates
+1. **Tank Levels**
+   - `tank_level(tank, level)` - Represents the current level of a specific tank.
+   - `tank_full(tank)` - Indicates if a tank is over 95% full.
+   - `tank_min_heel(tank)` - Indicates if a tank has at least 10% heel remaining.
+
+2. **Berth Occupancy**
+   - `berth_occupied(vessel)` - Indicates if a vessel is currently occupying the berth.
+   - `berth_available` - Indicates if the berth is available for a new vessel.
+
+3. **Vessel Arrival**
+   - `vessel_arrived(vessel, time)` - Indicates if a vessel has arrived at the berth at a specific time.
+
+4. **Cargo Status**
+   - `cargo_loaded(cargo, vessel)` - Indicates if a cargo has been loaded onto a vessel.
+   - `cargo_accepted(cargo)` - Indicates if a spot cargo opportunity has been accepted.
+
+5. **Quality State**
+   - `hhv_within_spec(cargo)` - Indicates if the HHV of a cargo is within the specified range (1055-1095 BTU/scf).
+
+### Functions
+1. **Numeric Fluents**
+   - `HHV(train)` - Represents the Higher Heating Value for a specific train, which can vary based on the production feed.
+   - `volume(cargo)` - Represents the volume of a specific cargo (e.g., 75k m³ for term cargo, 70k m³ for spot cargo).
+   - `revenue(cargo)` - Represents the revenue generated from a specific cargo (e.g., $80M for term cargo, $85-95M for spot cargo).
+   - `costs(demurrage, boil_off)` - Represents the costs incurred from demurrage and boil-off.
+   - `penalty(off_spec)` - Represents the penalty incurred if the HHV is outside the specified range.
+   - `expected_value(cargo)` - Represents the expected value of a cargo opportunity, factoring...
+INFO:root:================================================================================
+INFO:root:================================================================================
+INFO:root:LLM PROMPT:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:Aggregate into a consistent PPDDL type/predicate/function list for LNG offtake.
+
+Candidate:
+Based on the LNG offtake optimization problem provided, here are the extracted PPDDL types, predicates, and functions:
+
+### Types
+1. **Trains**
+   - Train 1
+   - Train 2
+
+2. **Tanks**
+   - Tank A
+   - Tank B
+   - Tank C
+
+3. **Vessels**
+   - Vessel (generic type for all vessels)
+
+4. **Cargoes**
+   - Term Cargo
+   - Spot Cargo
+
+5. **Time Periods**
+   - Day (specific time periods within the 30-day horizon)
+
+### Predicates
+1. **Tank Levels**
+   - `tank_level(tank, level)`: Represents the current level of gas in a specific tank.
+   - `tank_full(tank)`: Indicates if a tank is over 95% full.
+   - `tank_min_heel(tank)`: Indicates if a tank has reached its minimum heel of 10%.
+
+2. **Berth Occupancy**
+   - `berth_occupied(vessel)`: Indicates if a vessel is currently occupying the berth.
+   - `berth_available`: Indicates if the berth is available for a new vessel.
+
+3. **Vessel Arrival**
+   - `vessel_arrived(vessel)`: Indicates if a vessel has arrived at the berth.
+   - `vessel_eta(vessel, time)`: Represents the estimated time of arrival for a vessel.
+
+4. **Cargo Status**
+   - `cargo_loaded(cargo)`: Indicates if a cargo has been loaded onto a vessel.
+   - `cargo_timing(cargo, start_time, end_time)`: Represents the timing for loading a specific cargo.
+
+5. **Quality State**
+   - `hhv_within_spec(cargo)`: Indicates if the HHV of a cargo is within the specified range (1055-1095 BTU/scf).
+
+### Functions
+1. **Numeric Fluents**
+   - `HHV(train)`: Represents the Higher Heating Value for a specific train, with uncertainty.
+   - `volume(tank)`: Represents the current volume of LNG in a specific tank.
+   - `revenue(cargo)`: Represents the revenue generated from a specific cargo (term or spot).
+   - `costs(demurrage, boil_off)`: Represents the total costs incurred from demurrage and boil-off.
+   - `penalties(cargo)`: Represents any penalties incurred for off-spec HHV or tank-top risk.
+
+### Summary
+T...
+INFO:root:--------------------------------------------------------------------------------
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:LLM RESPONSE:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:Based on the LNG offtake optimization problem, here is a refined and consistent list of PPDDL types, predicates, and functions:
+
+### Types
+1. **Train**
+   - `train1`
+   - `train2`
+
+2. **Tank**
+   - `tankA`
+   - `tankB`
+   - `tankC`
+
+3. **Vessel**
+   - `vessel`
+
+4. **Cargo**
+   - `term_cargo`
+   - `spot_cargo`
+
+5. **Time Period**
+   - `day` (represents specific time periods within a 30-day horizon)
+
+### Predicates
+1. **Tank Levels**
+   - `tank_level(tank, level)`: Represents the current level of gas in a specific tank.
+   - `tank_full(tank)`: Indicates if a tank is over 95% full.
+   - `tank_min_heel(tank)`: Indicates if a tank has reached its minimum heel of 10%.
+
+2. **Berth Occupancy**
+   - `berth_occupied(vessel)`: Indicates if a vessel is currently occupying the berth.
+   - `berth_available`: Indicates if the berth is available for a new vessel.
+
+3. **Vessel Arrival**
+   - `vessel_arrived(vessel)`: Indicates if a vessel has arrived at the berth.
+   - `vessel_eta(vessel, time)`: Represents the estimated time of arrival for a vessel.
+
+4. **Cargo Status**
+   - `cargo_loaded(cargo)`: Indicates if a cargo has been loaded onto a vessel.
+   - `cargo_timing(cargo, start_time, end_time)`: Represents the timing for loading a specific cargo.
+
+5. **Quality State**
+   - `hhv_within_spec(cargo)`: Indicates if the HHV of a cargo is within the specified range (1055-1095 BTU/scf).
+
+### Functions
+1. **Numeric Fluents**
+   - `HHV(train)`: Represents the Higher Heating Value for a specific train, with uncertainty.
+   - `volume(tank)`: Represents the current volume of LNG in a specific tank.
+   - `revenue(cargo)`: Represents the revenue generated from a specific cargo (term or spot).
+   - `costs(demurrage, boil_off)`: Represents the total costs incurred from demurrage and boil-off.
+   - `penalties(cargo)`: Represents any penalties incurred for off-spec HHV or tank-top risk.
+
+### Summary
+This structured extraction provides a clear framework for modeling the LNG offtake optimization pro...
+INFO:root:================================================================================
+INFO:root:================================================================================
+INFO:root:LLM PROMPT:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:Aggregate into a consistent PPDDL type/predicate/function list for LNG offtake.
+
+Candidate:
+Based on the LNG offtake optimization problem provided, here are the extracted PPDDL types, predicates, and functions:
+
+### Types
+1. **Trains**
+   - Train1
+   - Train2
+
+2. **Tanks**
+   - TankA
+   - TankB
+   - TankC
+
+3. **Vessels**
+   - Vessel (generic type for all vessels)
+
+4. **Cargoes**
+   - TermCargo
+   - SpotCargo
+
+5. **TimePeriods**
+   - TimePeriod (generic type for all time periods, e.g., days in the 30-day horizon)
+
+### Predicates
+1. **Tank Levels**
+   - `tank_level(tank, level)` - Represents the current level of a specific tank (e.g., `tank_level(TankA, Level)`).
+
+2. **Berth Occupancy**
+   - `berth_occupied(vessel)` - Indicates whether a specific vessel is currently occupying the berth.
+
+3. **Vessel Arrival**
+   - `vessel_arrived(vessel, time)` - Indicates whether a specific vessel has arrived at the berth at a given time.
+
+4. **Cargo Loading Status**
+   - `cargo_loaded(cargo, vessel, time)` - Indicates whether a specific cargo has been loaded onto a vessel at a given time.
+
+5. **Tank Connectivity**
+   - `tank_connected_to_train(tank, train)` - Indicates if a tank is connected to a specific train for withdrawals.
+
+6. **Quality Specification**
+   - `hhv_within_spec(cargo, hhv_value)` - Indicates whether the HHV of a specific cargo is within the specified quality range.
+
+7. **Operational Buffers**
+   - `operational_buffer(tank)` - Indicates if the operational buffer (20% headroom) is maintained for a specific tank.
+
+### Functions
+1. **HHV (Higher Heating Value)**
+   - `hhv(train)` - Returns the HHV value for a specific train, which may vary based on production conditions.
+
+2. **Volume**
+   - `volume(cargo)` - Returns the volume of a specific cargo (e.g., `volume(TermCargo)` or `volume(SpotCargo)`).
+
+3. **Revenue**
+   - `revenue(cargo)` - Returns the revenue generated from a specific cargo (e.g., `revenue(TermCargo)` or `revenue(SpotCargo)`).
+
+4. **Costs**
+   - `demurrag...
+INFO:root:--------------------------------------------------------------------------------
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:LLM RESPONSE:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:Based on the LNG offtake optimization problem you've provided, here is a refined and consistent list of PPDDL types, predicates, and functions:
+
+### Types
+1. **Trains**
+   - `Train1`
+   - `Train2`
+
+2. **Tanks**
+   - `TankA`
+   - `TankB`
+   - `TankC`
+
+3. **Vessels**
+   - `Vessel` (generic type for all vessels)
+
+4. **Cargoes**
+   - `TermCargo`
+   - `SpotCargo`
+
+5. **TimePeriods**
+   - `TimePeriod` (generic type for all time periods, e.g., days in a 30-day horizon)
+
+### Predicates
+1. **Tank Levels**
+   - `tank_level(tank, level)` - Represents the current level of a specific tank (e.g., `tank_level(TankA, Level)`).
+
+2. **Berth Occupancy**
+   - `berth_occupied(vessel)` - Indicates whether a specific vessel is currently occupying the berth.
+
+3. **Vessel Arrival**
+   - `vessel_arrived(vessel, time)` - Indicates whether a specific vessel has arrived at the berth at a given time.
+
+4. **Cargo Loading Status**
+   - `cargo_loaded(cargo, vessel, time)` - Indicates whether a specific cargo has been loaded onto a vessel at a given time.
+
+5. **Tank Connectivity**
+   - `tank_connected_to_train(tank, train)` - Indicates if a tank is connected to a specific train for withdrawals.
+
+6. **Quality Specification**
+   - `hhv_within_spec(cargo, hhv_value)` - Indicates whether the HHV of a specific cargo is within the specified quality range.
+
+7. **Operational Buffers**
+   - `operational_buffer(tank)` - Indicates if the operational buffer (20% headroom) is maintained for a specific tank.
+
+### Functions
+1. **HHV (Higher Heating Value)**
+   - `hhv(train)` - Returns the HHV value for a specific train, which may vary based on production conditions.
+
+2. **Volume**
+   - `volume(cargo)` - Returns the volume of a specific cargo (e.g., `volume(TermCargo)` or `volume(SpotCargo)`).
+
+3. **Revenue**
+   - `revenue(cargo)` - Returns the revenue generated from a specific cargo (e.g., `revenue(TermCargo)` or `revenue(SpotCargo)`).
+
+4. **Costs**
+   - `demurrage_cost(vessel, days)` - Calculates the demurrage co...
+INFO:root:================================================================================
+INFO:root:================================================================================
+INFO:root:LLM PROMPT:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:Aggregate into a consistent PPDDL type/predicate/function list for LNG offtake.
+
+Candidate:
+Based on the LNG offtake problem provided, here are the extracted PPDDL types, predicates, and functions:
+
+### Types
+1. **Trains**
+   - Train1
+   - Train2
+
+2. **Tanks**
+   - TankA
+   - TankB
+   - TankC
+
+3. **Vessels**
+   - Vessel (general type for any vessel)
+
+4. **Cargoes**
+   - TermCargo
+   - SpotCargo
+
+5. **TimePeriods**
+   - Day (representing each day in the 30-day horizon)
+
+### Predicates
+1. **Tank Levels**
+   - `tank_level(tank, level)` - Represents the current level of a specific tank.
+   - `tank_full(tank)` - Indicates if a tank is over 95% full.
+   - `tank_min_heel(tank)` - Indicates if a tank has at least 10% heel remaining.
+
+2. **Berth Occupancy**
+   - `berth_occupied(vessel)` - Indicates if a vessel is currently occupying the berth.
+   - `berth_available` - Indicates if the berth is available for a new vessel.
+
+3. **Vessel Arrival**
+   - `vessel_arrived(vessel, time)` - Indicates if a vessel has arrived at the berth at a specific time.
+
+4. **Cargo Status**
+   - `cargo_loaded(cargo, vessel)` - Indicates if a cargo has been loaded onto a vessel.
+   - `cargo_accepted(cargo)` - Indicates if a spot cargo opportunity has been accepted.
+
+5. **Quality State**
+   - `hhv_within_spec(cargo)` - Indicates if the HHV of a cargo is within the specified range (1055-1095 BTU/scf).
+
+### Functions
+1. **Numeric Fluents**
+   - `HHV(train)` - Represents the Higher Heating Value for a specific train, which can vary based on the production feed.
+   - `volume(cargo)` - Represents the volume of a specific cargo (e.g., 75k m³ for term cargo, 70k m³ for spot cargo).
+   - `revenue(cargo)` - Represents the revenue generated from a specific cargo (e.g., $80M for term cargo, $85-95M for spot cargo).
+   - `costs(demurrage, boil_off)` - Represents the costs incurred from demurrage and boil-off.
+   - `penalty(off_spec)` - Represents the penalty incurred if the HHV is outside the specified range.
+  ...
+INFO:root:--------------------------------------------------------------------------------
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:LLM RESPONSE:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:Based on the LNG offtake problem you've provided, here is a refined and consistent list of PPDDL types, predicates, and functions:
+
+### Types
+1. **Trains**
+   - `train1`
+   - `train2`
+
+2. **Tanks**
+   - `tankA`
+   - `tankB`
+   - `tankC`
+
+3. **Vessels**
+   - `vessel` (general type for any vessel)
+
+4. **Cargoes**
+   - `term_cargo`
+   - `spot_cargo`
+
+5. **TimePeriods**
+   - `day` (representing each day in the 30-day horizon)
+
+### Predicates
+1. **Tank Levels**
+   - `tank_level(tank, level)` - Represents the current level of a specific tank.
+   - `tank_full(tank)` - Indicates if a tank is over 95% full.
+   - `tank_min_heel(tank)` - Indicates if a tank has at least 10% heel remaining.
+
+2. **Berth Occupancy**
+   - `berth_occupied(vessel)` - Indicates if a vessel is currently occupying the berth.
+   - `berth_available` - Indicates if the berth is available for a new vessel.
+
+3. **Vessel Arrival**
+   - `vessel_arrived(vessel, time)` - Indicates if a vessel has arrived at the berth at a specific time.
+
+4. **Cargo Status**
+   - `cargo_loaded(cargo, vessel)` - Indicates if a cargo has been loaded onto a vessel.
+   - `cargo_accepted(cargo)` - Indicates if a spot cargo opportunity has been accepted.
+
+5. **Quality State**
+   - `hhv_within_spec(cargo)` - Indicates if the HHV of a cargo is within the specified range (1055-1095 BTU/scf).
+
+### Functions
+1. **Numeric Fluents**
+   - `HHV(train)` - Represents the Higher Heating Value for a specific train, which can vary based on the production feed.
+   - `volume(cargo)` - Represents the volume of a specific cargo (e.g., 75k m³ for term cargo, 70k m³ for spot cargo).
+   - `revenue(cargo)` - Represents the revenue generated from a specific cargo (e.g., $80M for term cargo, $85-95M for spot cargo).
+   - `costs(demurrage, boil_off)` - Represents the costs incurred from demurrage and boil-off.
+   - `penalty(off_spec)` - Represents the penalty incurred if the HHV is outside the specified range.
+   - `expected_value(cargo)` - Represents the exp...
+INFO:root:================================================================================
+INFO:root:================================================================================
+INFO:root:LLM PROMPT:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:Consolidate the above responses into one final answer that is consistent and deduplicated.
+
+Response 1:
+Based on the LNG offtake optimization problem, here is a refined and consistent list of PPDDL types, predicates, and functions:
+
+### Types
+1. **Train**
+   - `train1`
+   - `train2`
+
+2. **Tank**
+   - `tankA`
+   - `tankB`
+   - `tankC`
+
+3. **Vessel**
+   - `vessel`
+
+4. **Cargo**
+   - `term_cargo`
+   - `spot_cargo`
+
+5. **Time Period**
+   - `day` (represents specific time periods within a 30-day horizon)
+
+### Predicates
+1. **Tank Levels**
+   - `tank_level(tank, level)`: Represents the current level of gas in a specific tank.
+   - `tank_full(tank)`: Indicates if a tank is over 95% full.
+   - `tank_min_heel(tank)`: Indicates if a tank has reached its minimum heel of 10%.
+
+2. **Berth Occupancy**
+   - `berth_occupied(vessel)`: Indicates if a vessel is currently occupying the berth.
+   - `berth_available`: Indicates if the berth is available for a new vessel.
+
+3. **Vessel Arrival**
+   - `vessel_arrived(vessel)`: Indicates if a vessel has arrived at the berth.
+   - `vessel_eta(vessel, time)`: Represents the estimated time of arrival for a vessel.
+
+4. **Cargo Status**
+   - `cargo_loaded(cargo)`: Indicates if a cargo has been loaded onto a vessel.
+   - `cargo_timing(cargo, start_time, end_time)`: Represents the timing for loading a specific cargo.
+
+5. **Quality State**
+   - `hhv_within_spec(cargo)`: Indicates if the HHV of a cargo is within the specified range (1055-1095 BTU/scf).
+
+### Functions
+1. **Numeric Fluents**
+   - `HHV(train)`: Represents the Higher Heating Value for a specific train, with uncertainty.
+   - `volume(tank)`: Represents the current volume of LNG in a specific tank.
+   - `revenue(cargo)`: Represents the revenue generated from a specific cargo (term or spot).
+   - `costs(demurrage, boil_off)`: Represents the total costs incurred from demurrage and boil-off.
+   - `penalties(cargo)`: Represents any penalties incurred for off-spec HHV or tank-top risk.
+
+### Sum...
+INFO:root:--------------------------------------------------------------------------------
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:LLM RESPONSE:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:Based on the LNG offtake optimization problem, here is a consolidated and refined list of PPDDL types, predicates, and functions:
+
+### Types
+1. **Trains**
+   - `train1`
+   - `train2`
+
+2. **Tanks**
+   - `tankA`
+   - `tankB`
+   - `tankC`
+
+3. **Vessels**
+   - `vessel` (generic type for all vessels)
+
+4. **Cargoes**
+   - `term_cargo`
+   - `spot_cargo`
+
+5. **Time Periods**
+   - `day` (representing specific time periods within a 30-day horizon)
+
+### Predicates
+1. **Tank Levels**
+   - `tank_level(tank, level)`: Represents the current level of gas in a specific tank.
+   - `tank_full(tank)`: Indicates if a tank is over 95% full.
+   - `tank_min_heel(tank)`: Indicates if a tank has at least 10% heel remaining.
+
+2. **Berth Occupancy**
+   - `berth_occupied(vessel)`: Indicates if a vessel is currently occupying the berth.
+   - `berth_available`: Indicates if the berth is available for a new vessel.
+
+3. **Vessel Arrival**
+   - `vessel_arrived(vessel, time)`: Indicates if a vessel has arrived at the berth at a specific time.
+   - `vessel_eta(vessel, time)`: Represents the estimated time of arrival for a vessel.
+
+4. **Cargo Status**
+   - `cargo_loaded(cargo, vessel)`: Indicates if a cargo has been loaded onto a vessel.
+   - `cargo_accepted(cargo)`: Indicates if a spot cargo opportunity has been accepted.
+   - `cargo_timing(cargo, start_time, end_time)`: Represents the timing for loading a specific cargo.
+
+5. **Quality State**
+   - `hhv_within_spec(cargo)`: Indicates if the HHV of a cargo is within the specified range (1055-1095 BTU/scf).
+
+6. **Operational Buffers**
+   - `operational_buffer(tank)`: Indicates if the operational buffer (20% headroom) is maintained for a specific tank.
+
+### Functions
+1. **Numeric Fluents**
+   - `HHV(train)`: Represents the Higher Heating Value for a specific train, which may vary based on production conditions.
+   - `volume(cargo)`: Represents the volume of a specific cargo (e.g., 75k m³ for term cargo, 70k m³ for spot cargo).
+   - `revenue(cargo)`: Repr...
+INFO:root:================================================================================
+INFO:root:================================================================================
+INFO:root:LLM PROMPT:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:Extract PPDDL constraints and action preconditions from the LNG offtake problem.
+Focus on:
+- Tank capacity limits and connectivity
+- Berth scheduling (no overlap, turnaround time)
+- Laycan windows for term contracts
+- HHV quality specifications
+- Tidal restrictions
+
+Problem:
+
+LNG Offtake Optimization Problem
+
+Goal: Maximize value realization over a rolling 30-day horizon by meeting term contract obligations and exploiting probabilistic spot cargo opportunities, while explicitly representing uncertainty in product quality (HHV), vessel arrival times, and spot prices.
+
+Physical Context:
+- Two LNG trains operate in parallel with fixed upstream feed blends:
+  * Train 2 (ConocoPhillips Cascade): 100% Field 2, leaner gas (HHV: 1050-1070 BTU/scf, mean=1060, uncertainty ±10)
+  * Train 1 (Shell Mixed Refrigerant): 41-59% Field 1:Field 2 ratio (HHV: 1080-1100 BTU/scf, mean=1090, uncertainty ±10)
+- Field 2 is ramping up (production increasing 5% per week) while Field 1 ramps down
+- Production rates: Train 1: 4.5 MTPA, Train 2: 5.0 MTPA (maximized subject to maintenance)
+- Storage: 3 tanks (Tank A: 180k m³, Tank B: 180k m³, Tank C: 160k m³)
+- Tank connectivity: Train 1 → Tank A, B; Train 2 → Tank B, C; All tanks → Berth
+- Berth: Single berth with 24hr turnaround time between vessels
+
+Decisions:
+1. Cargo timing: load start/end within laycan windows (term contracts have ±2 day flexibility)
+2. Vessel sequencing and berth assignment (no overlap, 24hr clearance)
+3. Tank withdrawals per cargo (which tanks feed which cargo, respecting connectivity)
+4. Spot cargo acceptance: binary decision per opportunity (5 spot opportunities over horizon)
+5. Operational buffers: maintain 20% tank headroom to absorb ETA variance
+
+Objectives:
+- Primary: Maximize expected net value = revenues - costs - penalties
+- Revenues: Term cargoes ($80M each, 75k m³), Spot cargoes ($85-95M, 70k m³, price uncertain)
+- Costs: Demurrage ($50k/day if loading delayed), boil-off ($200k/day tank holding)
+- Penalties: Of...
+INFO:root:--------------------------------------------------------------------------------
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:LLM RESPONSE:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:To extract the PPDDL (Probabilistic Planning Domain Definition Language) constraints and action preconditions from the LNG offtake problem, we will focus on the specified areas: tank capacity limits and connectivity, berth scheduling, laycan windows for term contracts, HHV quality specifications, and tidal restrictions. Below are the extracted elements categorized accordingly.
+
+### 1. Tank Capacity Limits and Connectivity
+**Constraints:**
+- **Tank Capacity Limits:**
+  - Each tank must maintain a minimum heel of 10% and must not exceed 95% capacity.
+  - Tank A and Tank B have a capacity of 180,000 m³, while Tank C has a capacity of 160,000 m³.
+  
+- **Connectivity:**
+  - Train 1 can only withdraw from Tank A and Tank B.
+  - Train 2 can only withdraw from Tank B and Tank C.
+  
+**Action Preconditions:**
+- A tank must have sufficient capacity (≥10% heel and ≤95% full) to allow for withdrawals.
+- The selected tank must be connected to the respective train for loading operations.
+
+### 2. Berth Scheduling (No Overlap, Turnaround Time)
+**Constraints:**
+- Only one vessel can be berthed at a time.
+- There is a mandatory 24-hour turnaround time between vessels.
+
+**Action Preconditions:**
+- A vessel can only be assigned to the berth if the berth is available and the previous vessel has completed its operation and cleared the berth for at least 24 hours.
+
+### 3. Laycan Windows for Term Contracts
+**Constraints:**
+- Term contracts must load within a specified laycan window of ±2 days from the fixed contract dates.
+
+**Action Preconditions:**
+- A vessel can only start loading if the current time is within the laycan window for that term contract.
+
+### 4. HHV Quality Specifications
+**Constraints:**
+- The HHV (Higher Heating Value) of the LNG must fall within the range of 1055-1095 BTU/scf with at least a 95% probability to avoid a $2M penalty.
+
+**Action Preconditions:**
+- The expected HHV of the cargo being loaded must be calculated and verified to fall within the specified range befo...
+INFO:root:================================================================================
+INFO:root:================================================================================
+INFO:root:LLM PROMPT:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:Extract PPDDL constraints and action preconditions from the LNG offtake problem.
+Focus on:
+- Tank capacity limits and connectivity
+- Berth scheduling (no overlap, turnaround time)
+- Laycan windows for term contracts
+- HHV quality specifications
+- Tidal restrictions
+
+Problem:
+
+LNG Offtake Optimization Problem
+
+Goal: Maximize value realization over a rolling 30-day horizon by meeting term contract obligations and exploiting probabilistic spot cargo opportunities, while explicitly representing uncertainty in product quality (HHV), vessel arrival times, and spot prices.
+
+Physical Context:
+- Two LNG trains operate in parallel with fixed upstream feed blends:
+  * Train 2 (ConocoPhillips Cascade): 100% Field 2, leaner gas (HHV: 1050-1070 BTU/scf, mean=1060, uncertainty ±10)
+  * Train 1 (Shell Mixed Refrigerant): 41-59% Field 1:Field 2 ratio (HHV: 1080-1100 BTU/scf, mean=1090, uncertainty ±10)
+- Field 2 is ramping up (production increasing 5% per week) while Field 1 ramps down
+- Production rates: Train 1: 4.5 MTPA, Train 2: 5.0 MTPA (maximized subject to maintenance)
+- Storage: 3 tanks (Tank A: 180k m³, Tank B: 180k m³, Tank C: 160k m³)
+- Tank connectivity: Train 1 → Tank A, B; Train 2 → Tank B, C; All tanks → Berth
+- Berth: Single berth with 24hr turnaround time between vessels
+
+Decisions:
+1. Cargo timing: load start/end within laycan windows (term contracts have ±2 day flexibility)
+2. Vessel sequencing and berth assignment (no overlap, 24hr clearance)
+3. Tank withdrawals per cargo (which tanks feed which cargo, respecting connectivity)
+4. Spot cargo acceptance: binary decision per opportunity (5 spot opportunities over horizon)
+5. Operational buffers: maintain 20% tank headroom to absorb ETA variance
+
+Objectives:
+- Primary: Maximize expected net value = revenues - costs - penalties
+- Revenues: Term cargoes ($80M each, 75k m³), Spot cargoes ($85-95M, 70k m³, price uncertain)
+- Costs: Demurrage ($50k/day if loading delayed), boil-off ($200k/day tank holding)
+- Penalties: Of...
+INFO:root:--------------------------------------------------------------------------------
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:LLM RESPONSE:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:To extract the PPDDL (Probabilistic Planning Domain Definition Language) constraints and action preconditions from the LNG offtake problem, we will focus on the specified areas: tank capacity limits and connectivity, berth scheduling, laycan windows for term contracts, HHV quality specifications, and tidal restrictions. Below is a structured representation of these elements.
+
+### PPDDL Constraints and Action Preconditions
+
+#### 1. Tank Capacity Limits and Connectivity
+- **Constraints:**
+  - Each tank must maintain a minimum heel of 10% and cannot exceed 95% capacity.
+  - Tank A and Tank B are connected to Train 1; Tank B and Tank C are connected to Train 2.
+  - The total volume in each tank must respect the maximum capacity:
+    - Tank A: 180,000 m³
+    - Tank B: 180,000 m³
+    - Tank C: 160,000 m³
+- **Preconditions for Tank Withdrawals:**
+  - The volume withdrawn from a tank must not exceed the current volume in the tank.
+  - The tank selected for withdrawal must be connected to the train loading the cargo.
+
+#### 2. Berth Scheduling (No Overlap, Turnaround Time)
+- **Constraints:**
+  - Only one vessel can be at the berth at any given time.
+  - A 24-hour turnaround time is required between vessel operations.
+- **Preconditions for Berth Assignment:**
+  - A vessel can only be assigned to the berth if the previous vessel has completed loading and the 24-hour turnaround time has elapsed.
+  - The loading rate must be within the range of 8,000 to 12,000 m³/hr, depending on weather conditions.
+
+#### 3. Laycan Windows for Term Contracts
+- **Constraints:**
+  - Term contracts must be loaded within a ±2 day flexibility window around the fixed contract dates.
+- **Preconditions for Cargo Timing:**
+  - The start and end of loading for term contracts must fall within the specified laycan window.
+  - Spot cargoes can be accepted or rejected based on the availability of tank capacity and berth scheduling.
+
+#### 4. HHV Quality Specifications
+- **Constraints:**
+  - The HHV (Higher Heat...
+INFO:root:================================================================================
+INFO:root:================================================================================
+INFO:root:LLM PROMPT:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:Extract PPDDL constraints and action preconditions from the LNG offtake problem.
+Focus on:
+- Tank capacity limits and connectivity
+- Berth scheduling (no overlap, turnaround time)
+- Laycan windows for term contracts
+- HHV quality specifications
+- Tidal restrictions
+
+Problem:
+
+LNG Offtake Optimization Problem
+
+Goal: Maximize value realization over a rolling 30-day horizon by meeting term contract obligations and exploiting probabilistic spot cargo opportunities, while explicitly representing uncertainty in product quality (HHV), vessel arrival times, and spot prices.
+
+Physical Context:
+- Two LNG trains operate in parallel with fixed upstream feed blends:
+  * Train 2 (ConocoPhillips Cascade): 100% Field 2, leaner gas (HHV: 1050-1070 BTU/scf, mean=1060, uncertainty ±10)
+  * Train 1 (Shell Mixed Refrigerant): 41-59% Field 1:Field 2 ratio (HHV: 1080-1100 BTU/scf, mean=1090, uncertainty ±10)
+- Field 2 is ramping up (production increasing 5% per week) while Field 1 ramps down
+- Production rates: Train 1: 4.5 MTPA, Train 2: 5.0 MTPA (maximized subject to maintenance)
+- Storage: 3 tanks (Tank A: 180k m³, Tank B: 180k m³, Tank C: 160k m³)
+- Tank connectivity: Train 1 → Tank A, B; Train 2 → Tank B, C; All tanks → Berth
+- Berth: Single berth with 24hr turnaround time between vessels
+
+Decisions:
+1. Cargo timing: load start/end within laycan windows (term contracts have ±2 day flexibility)
+2. Vessel sequencing and berth assignment (no overlap, 24hr clearance)
+3. Tank withdrawals per cargo (which tanks feed which cargo, respecting connectivity)
+4. Spot cargo acceptance: binary decision per opportunity (5 spot opportunities over horizon)
+5. Operational buffers: maintain 20% tank headroom to absorb ETA variance
+
+Objectives:
+- Primary: Maximize expected net value = revenues - costs - penalties
+- Revenues: Term cargoes ($80M each, 75k m³), Spot cargoes ($85-95M, 70k m³, price uncertain)
+- Costs: Demurrage ($50k/day if loading delayed), boil-off ($200k/day tank holding)
+- Penalties: Of...
+INFO:root:--------------------------------------------------------------------------------
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:LLM RESPONSE:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:To extract the PPDDL (Planning Domain Definition Language) constraints and action preconditions from the LNG offtake problem, we will focus on the specified aspects: tank capacity limits and connectivity, berth scheduling, laycan windows for term contracts, HHV quality specifications, and tidal restrictions. Below is a structured representation of these elements.
+
+### PPDDL Constraints
+
+1. **Tank Capacity Limits and Connectivity**
+   - **Constraints:**
+     - Each tank must maintain a minimum heel of 10% and a maximum capacity of 95%.
+     - Tank A and B can only receive LNG from Train 1; Tank B and C can only receive LNG from Train 2.
+     - The total volume in each tank must not exceed its capacity.
+   - **Formulation:**
+     ```ppddl
+     (:constraint
+       (and
+         (<= (tank_volume TankA) (* 0.95 (tank_capacity TankA)))
+         (>= (tank_volume TankA) (* 0.10 (tank_capacity TankA)))
+         (<= (tank_volume TankB) (* 0.95 (tank_capacity TankB)))
+         (>= (tank_volume TankB) (* 0.10 (tank_capacity TankB)))
+         (<= (tank_volume TankC) (* 0.95 (tank_capacity TankC)))
+         (>= (tank_volume TankC) (* 0.10 (tank_capacity TankC)))
+       )
+     )
+     ```
+
+2. **Berth Scheduling (No Overlap, Turnaround Time)**
+   - **Constraints:**
+     - Only one vessel can be at the berth at any given time.
+     - There must be a 24-hour turnaround time between vessels.
+   - **Formulation:**
+     ```ppddl
+     (:constraint
+       (forall (?v1 ?v2)
+         (=> (at_berth ?v1) (not (at_berth ?v2)))
+       )
+     )
+     (:constraint
+       (forall (?v)
+         (=> (loading ?v) (not (loading ?v (time + 24 hours))))
+       )
+     )
+     ```
+
+3. **Laycan Windows for Term Contracts**
+   - **Constraints:**
+     - Term contracts must load within ±2 days of the specified laycan window.
+   - **Formulation:**
+     ```ppddl
+     (:constraint
+       (forall (?contract)
+         (=> (term_contract ?contract)
+             (and
+               (within_window (start_time ?contract)...
+INFO:root:================================================================================
+INFO:root:================================================================================
+INFO:root:LLM PROMPT:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:Aggregate into coherent PPDDL action preconditions and invariants.
+
+Candidate:
+To extract the PPDDL (Probabilistic Planning Domain Definition Language) constraints and action preconditions from the LNG offtake problem, we will focus on the specified areas: tank capacity limits and connectivity, berth scheduling, laycan windows for term contracts, HHV quality specifications, and tidal restrictions. Below are the extracted elements categorized accordingly.
+
+### 1. Tank Capacity Limits and Connectivity
+**Constraints:**
+- **Tank Capacity Limits:**
+  - Each tank must maintain a minimum heel of 10% and must not exceed 95% capacity.
+  - Tank A and Tank B have a capacity of 180,000 m³, while Tank C has a capacity of 160,000 m³.
+  
+- **Connectivity:**
+  - Train 1 can only withdraw from Tank A and Tank B.
+  - Train 2 can only withdraw from Tank B and Tank C.
+  
+**Action Preconditions:**
+- A tank must have sufficient capacity (≥10% heel and ≤95% full) to allow for withdrawals.
+- The selected tank must be connected to the respective train for loading operations.
+
+### 2. Berth Scheduling (No Overlap, Turnaround Time)
+**Constraints:**
+- Only one vessel can be berthed at a time.
+- There is a mandatory 24-hour turnaround time between vessels.
+
+**Action Preconditions:**
+- A vessel can only be assigned to the berth if the berth is available and the previous vessel has completed its operation and cleared the berth for at least 24 hours.
+
+### 3. Laycan Windows for Term Contracts
+**Constraints:**
+- Term contracts must load within a specified laycan window of ±2 days from the fixed contract dates.
+
+**Action Preconditions:**
+- A vessel can only start loading if the current time is within the laycan window for that term contract.
+
+### 4. HHV Quality Specifications
+**Constraints:**
+- The HHV (Higher Heating Value) of the LNG must fall within the range of 1055-1095 BTU/scf with at least a 95% probability to avoid a $2M penalty.
+
+**Action Preconditions:**
+- The expected HHV of the cargo being...
+INFO:root:--------------------------------------------------------------------------------
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:LLM RESPONSE:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:Based on the provided information, we can aggregate the PPDDL action preconditions and invariants into a coherent structure that clearly outlines the constraints and conditions necessary for the LNG offtake problem. Below is a structured representation of the PPDDL elements:
+
+### PPDDL Action Preconditions and Invariants for LNG Offtake Problem
+
+#### 1. Tank Capacity Limits and Connectivity
+**Invariants:**
+- **Tank Capacity Limits:**
+  - Each tank must maintain a minimum heel of 10% and must not exceed 95% capacity.
+  - Tank A and Tank B have a capacity of 180,000 m³; Tank C has a capacity of 160,000 m³.
+
+- **Connectivity:**
+  - Train 1 can withdraw from Tank A and Tank B.
+  - Train 2 can withdraw from Tank B and Tank C.
+
+**Action Preconditions:**
+- A tank must have sufficient capacity (≥10% heel and ≤95% full) to allow for withdrawals.
+- The selected tank must be connected to the respective train for loading operations.
+
+#### 2. Berth Scheduling
+**Invariants:**
+- Only one vessel can be berthed at a time.
+- A mandatory 24-hour turnaround time is required between vessels.
+
+**Action Preconditions:**
+- A vessel can only be assigned to the berth if:
+  - The berth is available.
+  - The previous vessel has completed its operation and cleared the berth for at least 24 hours.
+
+#### 3. Laycan Windows for Term Contracts
+**Invariants:**
+- Term contracts must load within a specified laycan window of ±2 days from the fixed contract dates.
+
+**Action Preconditions:**
+- A vessel can only start loading if the current time is within the laycan window for that term contract.
+
+#### 4. HHV Quality Specifications
+**Invariants:**
+- The HHV (Higher Heating Value) of the LNG must fall within the range of 1055-1095 BTU/scf with at least a 95% probability to avoid a $2M penalty.
+
+**Action Preconditions:**
+- The expected HHV of the cargo being loaded must be calculated and verified to fall within the specified range before loading begins.
+
+#### 5. Tidal Restrictions
+**Invariants:**
+- Operation...
+INFO:root:================================================================================
+INFO:root:================================================================================
+INFO:root:LLM PROMPT:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:Aggregate into coherent PPDDL action preconditions and invariants.
+
+Candidate:
+To extract the PPDDL (Probabilistic Planning Domain Definition Language) constraints and action preconditions from the LNG offtake problem, we will focus on the specified areas: tank capacity limits and connectivity, berth scheduling, laycan windows for term contracts, HHV quality specifications, and tidal restrictions. Below is a structured representation of these elements.
+
+### PPDDL Constraints and Action Preconditions
+
+#### 1. Tank Capacity Limits and Connectivity
+- **Constraints:**
+  - Each tank must maintain a minimum heel of 10% and cannot exceed 95% capacity.
+  - Tank A and Tank B are connected to Train 1; Tank B and Tank C are connected to Train 2.
+  - The total volume in each tank must respect the maximum capacity:
+    - Tank A: 180,000 m³
+    - Tank B: 180,000 m³
+    - Tank C: 160,000 m³
+- **Preconditions for Tank Withdrawals:**
+  - The volume withdrawn from a tank must not exceed the current volume in the tank.
+  - The tank selected for withdrawal must be connected to the train loading the cargo.
+
+#### 2. Berth Scheduling (No Overlap, Turnaround Time)
+- **Constraints:**
+  - Only one vessel can be at the berth at any given time.
+  - A 24-hour turnaround time is required between vessel operations.
+- **Preconditions for Berth Assignment:**
+  - A vessel can only be assigned to the berth if the previous vessel has completed loading and the 24-hour turnaround time has elapsed.
+  - The loading rate must be within the range of 8,000 to 12,000 m³/hr, depending on weather conditions.
+
+#### 3. Laycan Windows for Term Contracts
+- **Constraints:**
+  - Term contracts must be loaded within a ±2 day flexibility window around the fixed contract dates.
+- **Preconditions for Cargo Timing:**
+  - The start and end of loading for term contracts must fall within the specified laycan window.
+  - Spot cargoes can be accepted or rejected based on the availability of tank capacity and berth scheduling.
+...
+INFO:root:--------------------------------------------------------------------------------
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:LLM RESPONSE:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:### PPDDL Action Preconditions and Invariants for LNG Offtake Problem
+
+The following is a coherent aggregation of the PPDDL constraints and action preconditions derived from the LNG offtake problem, structured into clear sections for better understanding and implementation.
+
+#### 1. Tank Capacity Limits and Connectivity
+- **Invariants:**
+  - Each tank must maintain a minimum heel of 10% and cannot exceed 95% of its maximum capacity.
+  - The maximum capacities for tanks are as follows:
+    - Tank A: 180,000 m³
+    - Tank B: 180,000 m³
+    - Tank C: 160,000 m³
+  - Connectivity constraints dictate that:
+    - Tank A and Tank B are connected to Train 1.
+    - Tank B and Tank C are connected to Train 2.
+
+- **Preconditions for Tank Withdrawals:**
+  - The volume to be withdrawn from a tank must not exceed the current volume in that tank.
+  - The selected tank for withdrawal must be connected to the train that is loading the cargo.
+
+#### 2. Berth Scheduling
+- **Invariants:**
+  - Only one vessel can occupy the berth at any given time.
+  - A mandatory 24-hour turnaround time is required between the operations of different vessels.
+
+- **Preconditions for Berth Assignment:**
+  - A vessel can only be assigned to the berth if:
+    - The previous vessel has completed loading.
+    - The 24-hour turnaround time has elapsed since the previous vessel's departure.
+  - The loading rate must be within the range of 8,000 to 12,000 m³/hr, contingent on weather conditions.
+
+#### 3. Laycan Windows for Term Contracts
+- **Invariants:**
+  - Term contracts must be executed within a ±2 day flexibility window around the specified contract dates.
+
+- **Preconditions for Cargo Timing:**
+  - The start and end of loading for term contracts must occur within the defined laycan window.
+  - Acceptance or rejection of spot cargoes is contingent upon:
+    - Availability of tank capacity.
+    - Berth scheduling constraints.
+
+#### 4. HHV Quality Specifications
+- **Invariants:**
+  - The HHV (Higher Heating Val...
+INFO:root:================================================================================
+INFO:root:================================================================================
+INFO:root:LLM PROMPT:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:Aggregate into coherent PPDDL action preconditions and invariants.
+
+Candidate:
+To extract the PPDDL (Planning Domain Definition Language) constraints and action preconditions from the LNG offtake problem, we will focus on the specified aspects: tank capacity limits and connectivity, berth scheduling, laycan windows for term contracts, HHV quality specifications, and tidal restrictions. Below is a structured representation of these elements.
+
+### PPDDL Constraints
+
+1. **Tank Capacity Limits and Connectivity**
+   - **Constraints:**
+     - Each tank must maintain a minimum heel of 10% and a maximum capacity of 95%.
+     - Tank A and B can only receive LNG from Train 1; Tank B and C can only receive LNG from Train 2.
+     - The total volume in each tank must not exceed its capacity.
+   - **Formulation:**
+     ```ppddl
+     (:constraint
+       (and
+         (<= (tank_volume TankA) (* 0.95 (tank_capacity TankA)))
+         (>= (tank_volume TankA) (* 0.10 (tank_capacity TankA)))
+         (<= (tank_volume TankB) (* 0.95 (tank_capacity TankB)))
+         (>= (tank_volume TankB) (* 0.10 (tank_capacity TankB)))
+         (<= (tank_volume TankC) (* 0.95 (tank_capacity TankC)))
+         (>= (tank_volume TankC) (* 0.10 (tank_capacity TankC)))
+       )
+     )
+     ```
+
+2. **Berth Scheduling (No Overlap, Turnaround Time)**
+   - **Constraints:**
+     - Only one vessel can be at the berth at any given time.
+     - There must be a 24-hour turnaround time between vessels.
+   - **Formulation:**
+     ```ppddl
+     (:constraint
+       (forall (?v1 ?v2)
+         (=> (at_berth ?v1) (not (at_berth ?v2)))
+       )
+     )
+     (:constraint
+       (forall (?v)
+         (=> (loading ?v) (not (loading ?v (time + 24 hours))))
+       )
+     )
+     ```
+
+3. **Laycan Windows for Term Contracts**
+   - **Constraints:**
+     - Term contracts must load within ±2 days of the specified laycan window.
+   - **Formulation:**
+     ```ppddl
+     (:constraint
+       (forall (?contract)
+         (=> (term_contract ?c...
+INFO:root:--------------------------------------------------------------------------------
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:LLM RESPONSE:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:Here's a coherent aggregation of the PPDDL action preconditions and invariants based on the LNG offtake problem, structured for clarity and completeness.
+
+### PPDDL Constraints
+
+1. **Tank Capacity Limits and Connectivity**
+   - **Constraints:**
+     - Each tank must maintain a minimum heel of 10% and a maximum capacity of 95%.
+     - Tank A and B can only receive LNG from Train 1; Tank B and C can only receive LNG from Train 2.
+     - The total volume in each tank must not exceed its capacity.
+   - **Formulation:**
+     ```ppddl
+     (:constraint
+       (and
+         (<= (tank_volume TankA) (* 0.95 (tank_capacity TankA)))
+         (>= (tank_volume TankA) (* 0.10 (tank_capacity TankA)))
+         (<= (tank_volume TankB) (* 0.95 (tank_capacity TankB)))
+         (>= (tank_volume TankB) (* 0.10 (tank_capacity TankB)))
+         (<= (tank_volume TankC) (* 0.95 (tank_capacity TankC)))
+         (>= (tank_volume TankC) (* 0.10 (tank_capacity TankC)))
+       )
+     )
+     ```
+
+2. **Berth Scheduling (No Overlap, Turnaround Time)**
+   - **Constraints:**
+     - Only one vessel can be at the berth at any given time.
+     - There must be a 24-hour turnaround time between vessels.
+   - **Formulation:**
+     ```ppddl
+     (:constraint
+       (forall (?v1 ?v2)
+         (=> (at_berth ?v1) (not (at_berth ?v2)))
+       )
+     )
+     (:constraint
+       (forall (?v)
+         (=> (loading ?v) (not (loading ?v (time + 24 hours))))
+       )
+     )
+     ```
+
+3. **Laycan Windows for Term Contracts**
+   - **Constraints:**
+     - Term contracts must load within ±2 days of the specified laycan window.
+   - **Formulation:**
+     ```ppddl
+     (:constraint
+       (forall (?contract)
+         (=> (term_contract ?contract)
+             (and
+               (within_window (start_time ?contract) (current_time) 2 days)
+               (within_window (end_time ?contract) (current_time) 2 days)
+             )
+         )
+       )
+     )
+     ```
+
+4. **HHV Quality Specifications**
+   - **Constraints:**
+     -...
+INFO:root:================================================================================
+INFO:root:================================================================================
+INFO:root:LLM PROMPT:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:Consolidate the above responses into one final answer that is consistent and deduplicated.
+
+Response 1:
+Based on the provided information, we can aggregate the PPDDL action preconditions and invariants into a coherent structure that clearly outlines the constraints and conditions necessary for the LNG offtake problem. Below is a structured representation of the PPDDL elements:
+
+### PPDDL Action Preconditions and Invariants for LNG Offtake Problem
+
+#### 1. Tank Capacity Limits and Connectivity
+**Invariants:**
+- **Tank Capacity Limits:**
+  - Each tank must maintain a minimum heel of 10% and must not exceed 95% capacity.
+  - Tank A and Tank B have a capacity of 180,000 m³; Tank C has a capacity of 160,000 m³.
+
+- **Connectivity:**
+  - Train 1 can withdraw from Tank A and Tank B.
+  - Train 2 can withdraw from Tank B and Tank C.
+
+**Action Preconditions:**
+- A tank must have sufficient capacity (≥10% heel and ≤95% full) to allow for withdrawals.
+- The selected tank must be connected to the respective train for loading operations.
+
+#### 2. Berth Scheduling
+**Invariants:**
+- Only one vessel can be berthed at a time.
+- A mandatory 24-hour turnaround time is required between vessels.
+
+**Action Preconditions:**
+- A vessel can only be assigned to the berth if:
+  - The berth is available.
+  - The previous vessel has completed its operation and cleared the berth for at least 24 hours.
+
+#### 3. Laycan Windows for Term Contracts
+**Invariants:**
+- Term contracts must load within a specified laycan window of ±2 days from the fixed contract dates.
+
+**Action Preconditions:**
+- A vessel can only start loading if the current time is within the laycan window for that term contract.
+
+#### 4. HHV Quality Specifications
+**Invariants:**
+- The HHV (Higher Heating Value) of the LNG must fall within the range of 1055-1095 BTU/scf with at least a 95% probability to avoid a $2M penalty.
+
+**Action Preconditions:**
+- The expected HHV of the cargo being loaded must be calculated and verified to fall w...
+INFO:root:--------------------------------------------------------------------------------
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:LLM RESPONSE:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:### Consolidated PPDDL Action Preconditions and Invariants for LNG Offtake Problem
+
+This document provides a structured overview of the PPDDL (Planning Domain Definition Language) action preconditions and invariants relevant to the LNG (Liquefied Natural Gas) offtake problem. It aggregates the necessary constraints and conditions for effective modeling and optimization.
+
+#### 1. Tank Capacity Limits and Connectivity
+- **Invariants:**
+  - Each tank must maintain a minimum heel of 10% and cannot exceed 95% of its maximum capacity.
+  - Tank capacities:
+    - Tank A: 180,000 m³
+    - Tank B: 180,000 m³
+    - Tank C: 160,000 m³
+  - Connectivity:
+    - Train 1 can withdraw from Tank A and Tank B.
+    - Train 2 can withdraw from Tank B and Tank C.
+
+- **Action Preconditions:**
+  - A tank must have sufficient capacity (≥10% heel and ≤95% full) to allow for withdrawals.
+  - The selected tank must be connected to the respective train for loading operations.
+
+#### 2. Berth Scheduling
+- **Invariants:**
+  - Only one vessel can occupy the berth at any given time.
+  - A mandatory 24-hour turnaround time is required between the operations of different vessels.
+
+- **Action Preconditions:**
+  - A vessel can only be assigned to the berth if:
+    - The berth is available.
+    - The previous vessel has completed its operation and cleared the berth for at least 24 hours.
+
+#### 3. Laycan Windows for Term Contracts
+- **Invariants:**
+  - Term contracts must load within a ±2 day flexibility window around the specified contract dates.
+
+- **Action Preconditions:**
+  - A vessel can only start loading if the current time is within the laycan window for that term contract.
+
+#### 4. HHV Quality Specifications
+- **Invariants:**
+  - The HHV (Higher Heating Value) of the LNG must be maintained within the range of 1055 to 1095 BTU/scf to avoid incurring a $2 million penalty.
+
+- **Action Preconditions:**
+  - The expected HHV of the cargo being loaded must be calculated and verified to fall within the sp...
+INFO:root:================================================================================
+INFO:root:================================================================================
+INFO:root:LLM PROMPT:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:Formulate PPDDL reward structure for LNG offtake optimization.
+The objective is to maximize expected net value:
+- Revenues from term and spot cargoes
+- Costs (demurrage, boil-off)
+- Penalties (off-spec HHV, tank-top events)
+- Probabilistic effects for uncertainties
+
+Problem:
+
+LNG Offtake Optimization Problem
+
+Goal: Maximize value realization over a rolling 30-day horizon by meeting term contract obligations and exploiting probabilistic spot cargo opportunities, while explicitly representing uncertainty in product quality (HHV), vessel arrival times, and spot prices.
+
+Physical Context:
+- Two LNG trains operate in parallel with fixed upstream feed blends:
+  * Train 2 (ConocoPhillips Cascade): 100% Field 2, leaner gas (HHV: 1050-1070 BTU/scf, mean=1060, uncertainty ±10)
+  * Train 1 (Shell Mixed Refrigerant): 41-59% Field 1:Field 2 ratio (HHV: 1080-1100 BTU/scf, mean=1090, uncertainty ±10)
+- Field 2 is ramping up (production increasing 5% per week) while Field 1 ramps down
+- Production rates: Train 1: 4.5 MTPA, Train 2: 5.0 MTPA (maximized subject to maintenance)
+- Storage: 3 tanks (Tank A: 180k m³, Tank B: 180k m³, Tank C: 160k m³)
+- Tank connectivity: Train 1 → Tank A, B; Train 2 → Tank B, C; All tanks → Berth
+- Berth: Single berth with 24hr turnaround time between vessels
+
+Decisions:
+1. Cargo timing: load start/end within laycan windows (term contracts have ±2 day flexibility)
+2. Vessel sequencing and berth assignment (no overlap, 24hr clearance)
+3. Tank withdrawals per cargo (which tanks feed which cargo, respecting connectivity)
+4. Spot cargo acceptance: binary decision per opportunity (5 spot opportunities over horizon)
+5. Operational buffers: maintain 20% tank headroom to absorb ETA variance
+
+Objectives:
+- Primary: Maximize expected net value = revenues - costs - penalties
+- Revenues: Term cargoes ($80M each, 75k m³), Spot cargoes ($85-95M, 70k m³, price uncertain)
+- Costs: Demurrage ($50k/day if loading delayed), boil-off ($200k/day tank holding)
+- Penalties: Of...
+INFO:root:--------------------------------------------------------------------------------
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:LLM RESPONSE:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:To formulate a PPDDL (Probabilistic Planning Domain Definition Language) reward structure for the LNG offtake optimization problem, we need to define the components that contribute to the expected net value, including revenues, costs, penalties, and the probabilistic effects of uncertainties. Below is a structured approach to defining the reward structure in PPDDL.
+
+### PPDDL Reward Structure
+
+#### 1. **State Variables**
+Define the state variables that capture the relevant aspects of the LNG offtake optimization problem:
+- `current_time`: Current time in the 30-day horizon.
+- `tank_levels`: Levels in each tank (A, B, C).
+- `vessel_schedule`: Schedule of vessels at the berth.
+- `cargo_status`: Status of term and spot cargoes (loaded, pending, rejected).
+- `hhv_quality`: HHV quality distribution for each train.
+- `demurrage_days`: Number of days delayed in loading.
+- `boil_off_days`: Number of days tanks are holding LNG.
+- `penalty_off_spec`: Indicator for off-spec HHV.
+- `penalty_tank_top`: Indicator for tank-top risk.
+
+#### 2. **Actions**
+Define the actions that can be taken in this domain:
+- `load_term_cargo`: Load a term cargo within the specified laycan.
+- `load_spot_cargo`: Accept and load a spot cargo.
+- `assign_vessel`: Assign a vessel to the berth.
+- `withdraw_from_tank`: Withdraw LNG from a specific tank for loading.
+- `wait`: Wait for the next time step (to account for delays).
+
+#### 3. **Rewards**
+Define the reward structure based on the objectives:
+- **Revenues from Term Cargoes**: 
+  - Reward for loading a term cargo: `reward_term_cargo = 80M` (if loaded successfully).
+  
+- **Revenues from Spot Cargoes**: 
+  - Reward for loading a spot cargo: `reward_spot_cargo = spot_price` (where `spot_price` is sampled from a uniform distribution between $85M and $95M).
+  
+- **Costs**:
+  - Demurrage cost: `cost_demurrage = -50k * demurrage_days`.
+  - Boil-off cost: `cost_boil_off = -200k * boil_off_days`.
+  
+- **Penalties**:
+  - Off-spec HHV penalty: `penalty_off_spec...
+INFO:root:================================================================================
+INFO:root:================================================================================
+INFO:root:LLM PROMPT:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:Formulate PPDDL reward structure for LNG offtake optimization.
+The objective is to maximize expected net value:
+- Revenues from term and spot cargoes
+- Costs (demurrage, boil-off)
+- Penalties (off-spec HHV, tank-top events)
+- Probabilistic effects for uncertainties
+
+Problem:
+
+LNG Offtake Optimization Problem
+
+Goal: Maximize value realization over a rolling 30-day horizon by meeting term contract obligations and exploiting probabilistic spot cargo opportunities, while explicitly representing uncertainty in product quality (HHV), vessel arrival times, and spot prices.
+
+Physical Context:
+- Two LNG trains operate in parallel with fixed upstream feed blends:
+  * Train 2 (ConocoPhillips Cascade): 100% Field 2, leaner gas (HHV: 1050-1070 BTU/scf, mean=1060, uncertainty ±10)
+  * Train 1 (Shell Mixed Refrigerant): 41-59% Field 1:Field 2 ratio (HHV: 1080-1100 BTU/scf, mean=1090, uncertainty ±10)
+- Field 2 is ramping up (production increasing 5% per week) while Field 1 ramps down
+- Production rates: Train 1: 4.5 MTPA, Train 2: 5.0 MTPA (maximized subject to maintenance)
+- Storage: 3 tanks (Tank A: 180k m³, Tank B: 180k m³, Tank C: 160k m³)
+- Tank connectivity: Train 1 → Tank A, B; Train 2 → Tank B, C; All tanks → Berth
+- Berth: Single berth with 24hr turnaround time between vessels
+
+Decisions:
+1. Cargo timing: load start/end within laycan windows (term contracts have ±2 day flexibility)
+2. Vessel sequencing and berth assignment (no overlap, 24hr clearance)
+3. Tank withdrawals per cargo (which tanks feed which cargo, respecting connectivity)
+4. Spot cargo acceptance: binary decision per opportunity (5 spot opportunities over horizon)
+5. Operational buffers: maintain 20% tank headroom to absorb ETA variance
+
+Objectives:
+- Primary: Maximize expected net value = revenues - costs - penalties
+- Revenues: Term cargoes ($80M each, 75k m³), Spot cargoes ($85-95M, 70k m³, price uncertain)
+- Costs: Demurrage ($50k/day if loading delayed), boil-off ($200k/day tank holding)
+- Penalties: Of...
+INFO:root:--------------------------------------------------------------------------------
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:LLM RESPONSE:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:To formulate a PPDDL (Probabilistic Planning Domain Definition Language) reward structure for the LNG offtake optimization problem, we need to define the components of the reward function that align with the objectives of maximizing expected net value while considering the uncertainties and constraints outlined in the problem. Below is a structured approach to creating the PPDDL reward structure.
+
+### PPDDL Reward Structure
+
+#### 1. **State Variables**
+Define the state variables that capture the essential aspects of the LNG offtake optimization problem:
+- `current_time`: Current time in the 30-day horizon.
+- `tank_levels`: Levels of LNG in each tank (A, B, C).
+- `vessel_schedule`: Schedule of vessels and their loading status.
+- `cargo_quality`: Quality of LNG being produced (HHV) for each train.
+- `spot_opportunities`: Availability and acceptance status of spot cargo opportunities.
+- `demurrage_cost`: Accumulated demurrage costs.
+- `boil_off_cost`: Accumulated boil-off costs.
+- `penalties`: Accumulated penalties for off-spec HHV and tank-top events.
+
+#### 2. **Actions**
+Define the actions available to the agent:
+- `load_cargo`: Load a specific cargo (term or spot) from a tank.
+- `accept_spot`: Accept or reject a spot cargo opportunity.
+- `schedule_vessel`: Schedule a vessel for loading.
+- `manage_tank`: Adjust tank withdrawals to maintain levels.
+- `monitor_quality`: Assess and manage the quality of LNG produced.
+
+#### 3. **Reward Function**
+The reward function should capture the expected net value, which can be expressed as:
+
+\[
+\text{Reward} = \text{Revenues} - \text{Costs} - \text{Penalties}
+\]
+
+Where:
+- **Revenues**:
+  - From term cargoes: \( \text{Term\_cargo\_revenue} = \text{number\_of\_term\_cargoes} \times 80M \)
+  - From spot cargoes: \( \text{Spot\_cargo\_revenue} = \text{number\_of\_accepted\_spot\_cargoes} \times \text{spot\_price} \)
+
+- **Costs**:
+  - Demurrage: \( \text{Demurrage\_cost} = \text{days\_delayed} \times 50k \)
+  - Boil-off: \( \text{Boil\...
+INFO:root:================================================================================
+INFO:root:================================================================================
+INFO:root:LLM PROMPT:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:Formulate PPDDL reward structure for LNG offtake optimization.
+The objective is to maximize expected net value:
+- Revenues from term and spot cargoes
+- Costs (demurrage, boil-off)
+- Penalties (off-spec HHV, tank-top events)
+- Probabilistic effects for uncertainties
+
+Problem:
+
+LNG Offtake Optimization Problem
+
+Goal: Maximize value realization over a rolling 30-day horizon by meeting term contract obligations and exploiting probabilistic spot cargo opportunities, while explicitly representing uncertainty in product quality (HHV), vessel arrival times, and spot prices.
+
+Physical Context:
+- Two LNG trains operate in parallel with fixed upstream feed blends:
+  * Train 2 (ConocoPhillips Cascade): 100% Field 2, leaner gas (HHV: 1050-1070 BTU/scf, mean=1060, uncertainty ±10)
+  * Train 1 (Shell Mixed Refrigerant): 41-59% Field 1:Field 2 ratio (HHV: 1080-1100 BTU/scf, mean=1090, uncertainty ±10)
+- Field 2 is ramping up (production increasing 5% per week) while Field 1 ramps down
+- Production rates: Train 1: 4.5 MTPA, Train 2: 5.0 MTPA (maximized subject to maintenance)
+- Storage: 3 tanks (Tank A: 180k m³, Tank B: 180k m³, Tank C: 160k m³)
+- Tank connectivity: Train 1 → Tank A, B; Train 2 → Tank B, C; All tanks → Berth
+- Berth: Single berth with 24hr turnaround time between vessels
+
+Decisions:
+1. Cargo timing: load start/end within laycan windows (term contracts have ±2 day flexibility)
+2. Vessel sequencing and berth assignment (no overlap, 24hr clearance)
+3. Tank withdrawals per cargo (which tanks feed which cargo, respecting connectivity)
+4. Spot cargo acceptance: binary decision per opportunity (5 spot opportunities over horizon)
+5. Operational buffers: maintain 20% tank headroom to absorb ETA variance
+
+Objectives:
+- Primary: Maximize expected net value = revenues - costs - penalties
+- Revenues: Term cargoes ($80M each, 75k m³), Spot cargoes ($85-95M, 70k m³, price uncertain)
+- Costs: Demurrage ($50k/day if loading delayed), boil-off ($200k/day tank holding)
+- Penalties: Of...
+INFO:root:--------------------------------------------------------------------------------
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:LLM RESPONSE:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:To formulate a PPDDL (Probabilistic Planning Domain Definition Language) reward structure for the LNG offtake optimization problem, we need to define the various components that contribute to the expected net value. This includes revenues from cargoes, costs incurred, penalties for non-compliance, and the probabilistic effects of uncertainties. Below is a structured approach to defining the reward function in PPDDL.
+
+### PPDDL Reward Structure
+
+#### 1. **State Variables**
+- `current_time`: The current time in the 30-day horizon.
+- `tank_levels`: The current levels of LNG in each tank (A, B, C).
+- `vessel_schedule`: The schedule of vessels, including their ETA and loading status.
+- `cargo_status`: The status of term and spot cargoes (loaded, pending, rejected).
+- `HHV_quality`: The current HHV quality of LNG being produced from each train.
+- `demurrage_cost`: Accumulated demurrage costs.
+- `boil_off_cost`: Accumulated boil-off costs.
+- `penalties`: Accumulated penalties for off-spec HHV and tank-top events.
+- `spot_opportunities`: Status of spot cargo opportunities (accepted/rejected).
+
+#### 2. **Rewards**
+The reward function can be defined as follows:
+
+```plaintext
+reward = revenues - costs - penalties
+```
+
+Where:
+- **Revenues**:
+  - From term cargoes: 
+    - `term_revenue = number_of_term_cargoes * $80M`
+  - From spot cargoes (considering probabilistic acceptance):
+    - `spot_revenue = sum(accepted_spot_cargoes * expected_spot_price)`
+    - `expected_spot_price = (0.7 * average_spot_price) + (0.3 * penalty_for_rejection)`
+  
+- **Costs**:
+  - Demurrage costs:
+    - `demurrage_cost = days_delayed * $50k`
+  - Boil-off costs:
+    - `boil_off_cost = days_held * $200k`
+  
+- **Penalties**:
+  - Off-spec HHV penalties:
+    - `off_spec_penalty = $2M * (1 - probability_of_compliance)`
+  - Tank-top penalties:
+    - `tank_top_penalty = $5M * (tank_levels > 95% capacity)`
+
+#### 3. **Probabilistic Effects**
+Incorporate uncertainties into the reward structure:
+- **HHV Quality Unc...
+INFO:root:================================================================================
+INFO:root:================================================================================
+INFO:root:LLM PROMPT:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:Aggregate into a single PPDDL reward formulation.
+
+Candidate:
+To formulate a PPDDL (Probabilistic Planning Domain Definition Language) reward structure for the LNG offtake optimization problem, we need to define the components that contribute to the expected net value, including revenues, costs, penalties, and the probabilistic effects of uncertainties. Below is a structured approach to defining the reward structure in PPDDL.
+
+### PPDDL Reward Structure
+
+#### 1. **State Variables**
+Define the state variables that capture the relevant aspects of the LNG offtake optimization problem:
+- `current_time`: Current time in the 30-day horizon.
+- `tank_levels`: Levels in each tank (A, B, C).
+- `vessel_schedule`: Schedule of vessels at the berth.
+- `cargo_status`: Status of term and spot cargoes (loaded, pending, rejected).
+- `hhv_quality`: HHV quality distribution for each train.
+- `demurrage_days`: Number of days delayed in loading.
+- `boil_off_days`: Number of days tanks are holding LNG.
+- `penalty_off_spec`: Indicator for off-spec HHV.
+- `penalty_tank_top`: Indicator for tank-top risk.
+
+#### 2. **Actions**
+Define the actions that can be taken in this domain:
+- `load_term_cargo`: Load a term cargo within the specified laycan.
+- `load_spot_cargo`: Accept and load a spot cargo.
+- `assign_vessel`: Assign a vessel to the berth.
+- `withdraw_from_tank`: Withdraw LNG from a specific tank for loading.
+- `wait`: Wait for the next time step (to account for delays).
+
+#### 3. **Rewards**
+Define the reward structure based on the objectives:
+- **Revenues from Term Cargoes**: 
+  - Reward for loading a term cargo: `reward_term_cargo = 80M` (if loaded successfully).
+  
+- **Revenues from Spot Cargoes**: 
+  - Reward for loading a spot cargo: `reward_spot_cargo = spot_price` (where `spot_price` is sampled from a uniform distribution between $85M and $95M).
+  
+- **Costs**:
+  - Demurrage cost: `cost_demurrage = -50k * demurrage_days`.
+  - Boil-off cost: `cost_boil_off = -200k * boil_off_days`.
+ ...
+INFO:root:--------------------------------------------------------------------------------
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:LLM RESPONSE:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:Here's a consolidated PPDDL reward formulation for the LNG offtake optimization problem, integrating all the components discussed:
+
+### PPDDL Reward Structure
+
+```plaintext
+(:reward
+  (define (expected_net_value)
+    (+ (sum 
+          (if (loaded_term_cargo) 80000000 0)  ; Reward for successfully loading term cargo
+          (if (loaded_spot_cargo) (sample_uniform 85000000 95000000) 0)  ; Reward for successfully loading spot cargo
+        )
+        (- (* 50000 demurrage_days)  ; Cost for demurrage based on delayed loading
+           (* 200000 boil_off_days)  ; Cost for boil-off based on days LNG is held
+           (if (off_spec_hhv) 2000000 0)  ; Penalty for off-spec HHV
+           (if (tank_top_risk) 5000000 0)  ; Penalty for tank-top risk
+        )
+      )
+    )
+  )
+)
+```
+
+### Explanation of Components
+
+1. **Revenues**:
+   - **Term Cargo Revenue**: A fixed reward of $80M is granted when a term cargo is successfully loaded.
+   - **Spot Cargo Revenue**: The reward for loading a spot cargo is drawn from a uniform distribution between $85M and $95M.
+
+2. **Costs**:
+   - **Demurrage Cost**: A cost of $50K per day is incurred for each day of delay in loading.
+   - **Boil-off Cost**: A cost of $200K is incurred for each day LNG is held in tanks.
+
+3. **Penalties**:
+   - **Off-spec HHV Penalty**: A penalty of $2M is applied if the HHV quality is outside the acceptable range.
+   - **Tank-top Penalty**: A penalty of $5M is incurred if tank levels exceed 95% full.
+
+### Probabilistic Effects
+The reward function inherently accounts for uncertainties through:
+- **Spot Price Uncertainty**: The reward for spot cargoes is probabilistic, reflecting the variability in market prices.
+- **Quality and Timing Uncertainties**: While not explicitly modeled in the reward function, the penalties and costs can be influenced by the probabilistic nature of HHV quality and vessel arrival times, which can be integrated into the planning model.
+
+### Conclusion
+This PPDDL reward structure effective...
+INFO:root:================================================================================
+INFO:root:================================================================================
+INFO:root:LLM PROMPT:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:Aggregate into a single PPDDL reward formulation.
+
+Candidate:
+To formulate a PPDDL (Probabilistic Planning Domain Definition Language) reward structure for the LNG offtake optimization problem, we need to define the components of the reward function that align with the objectives of maximizing expected net value while considering the uncertainties and constraints outlined in the problem. Below is a structured approach to creating the PPDDL reward structure.
+
+### PPDDL Reward Structure
+
+#### 1. **State Variables**
+Define the state variables that capture the essential aspects of the LNG offtake optimization problem:
+- `current_time`: Current time in the 30-day horizon.
+- `tank_levels`: Levels of LNG in each tank (A, B, C).
+- `vessel_schedule`: Schedule of vessels and their loading status.
+- `cargo_quality`: Quality of LNG being produced (HHV) for each train.
+- `spot_opportunities`: Availability and acceptance status of spot cargo opportunities.
+- `demurrage_cost`: Accumulated demurrage costs.
+- `boil_off_cost`: Accumulated boil-off costs.
+- `penalties`: Accumulated penalties for off-spec HHV and tank-top events.
+
+#### 2. **Actions**
+Define the actions available to the agent:
+- `load_cargo`: Load a specific cargo (term or spot) from a tank.
+- `accept_spot`: Accept or reject a spot cargo opportunity.
+- `schedule_vessel`: Schedule a vessel for loading.
+- `manage_tank`: Adjust tank withdrawals to maintain levels.
+- `monitor_quality`: Assess and manage the quality of LNG produced.
+
+#### 3. **Reward Function**
+The reward function should capture the expected net value, which can be expressed as:
+
+\[
+\text{Reward} = \text{Revenues} - \text{Costs} - \text{Penalties}
+\]
+
+Where:
+- **Revenues**:
+  - From term cargoes: \( \text{Term\_cargo\_revenue} = \text{number\_of\_term\_cargoes} \times 80M \)
+  - From spot cargoes: \( \text{Spot\_cargo\_revenue} = \text{number\_of\_accepted\_spot\_cargoes} \times \text{spot\_price} \)
+
+- **Costs**:
+  - Demurrage: \( \text{Demurrage\_cost} = \...
+INFO:root:--------------------------------------------------------------------------------
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:LLM RESPONSE:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:Here’s a consolidated PPDDL reward formulation for the LNG offtake optimization problem, integrating all the components into a cohesive structure:
+
+### PPDDL Reward Structure for LNG Offtake Optimization
+
+#### 1. **State Variables**
+Define the necessary state variables:
+- `current_time`: Current time in the 30-day horizon.
+- `tank_levels`: Levels of LNG in tanks A, B, and C.
+- `vessel_schedule`: Schedule of vessels and their loading status.
+- `cargo_quality`: Quality of LNG produced (HHV) for each train.
+- `spot_opportunities`: Availability and acceptance status of spot cargo opportunities.
+- `demurrage_cost`: Accumulated demurrage costs.
+- `boil_off_cost`: Accumulated boil-off costs.
+- `penalties`: Accumulated penalties for off-spec HHV and tank-top events.
+
+#### 2. **Actions**
+Available actions for the agent:
+- `load_cargo`: Load a specific cargo (term or spot) from a tank.
+- `accept_spot`: Accept or reject a spot cargo opportunity.
+- `schedule_vessel`: Schedule a vessel for loading.
+- `manage_tank`: Adjust tank withdrawals to maintain levels.
+- `monitor_quality`: Assess and manage the quality of LNG produced.
+
+#### 3. **Reward Function**
+The reward function is formulated as follows:
+
+\[
+\text{Reward} = \text{Revenues} - \text{Costs} - \text{Penalties}
+\]
+
+Where:
+- **Revenues**:
+  - From term cargoes: 
+    \[
+    \text{Term\_cargo\_revenue} = \text{number\_of\_term\_cargoes} \times 80M
+    \]
+  - From spot cargoes: 
+    \[
+    \text{Spot\_cargo\_revenue} = \text{number\_of\_accepted\_spot\_cargoes} \times \text{spot\_price}
+    \]
+
+- **Costs**:
+  - Demurrage: 
+    \[
+    \text{Demurrage\_cost} = \text{days\_delayed} \times 50k
+    \]
+  - Boil-off: 
+    \[
+    \text{Boil\_off\_cost} = \text{days\_held} \times 200k
+    \]
+
+- **Penalties**:
+  - Off-spec HHV: 
+    \[
+    \text{Off\_spec\_penalty} = \begin{cases} 
+    2M & \text{if HHV outside [1055, 1095]} \\
+    0 & \text{otherwise}
+    \end{cases}
+    \]
+  - Tank-top risk: 
+    \[
+    \text{Tank\_top\_penalty} = \be...
+INFO:root:================================================================================
+INFO:root:================================================================================
+INFO:root:LLM PROMPT:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:Aggregate into a single PPDDL reward formulation.
+
+Candidate:
+To formulate a PPDDL (Probabilistic Planning Domain Definition Language) reward structure for the LNG offtake optimization problem, we need to define the various components that contribute to the expected net value. This includes revenues from cargoes, costs incurred, penalties for non-compliance, and the probabilistic effects of uncertainties. Below is a structured approach to defining the reward function in PPDDL.
+
+### PPDDL Reward Structure
+
+#### 1. **State Variables**
+- `current_time`: The current time in the 30-day horizon.
+- `tank_levels`: The current levels of LNG in each tank (A, B, C).
+- `vessel_schedule`: The schedule of vessels, including their ETA and loading status.
+- `cargo_status`: The status of term and spot cargoes (loaded, pending, rejected).
+- `HHV_quality`: The current HHV quality of LNG being produced from each train.
+- `demurrage_cost`: Accumulated demurrage costs.
+- `boil_off_cost`: Accumulated boil-off costs.
+- `penalties`: Accumulated penalties for off-spec HHV and tank-top events.
+- `spot_opportunities`: Status of spot cargo opportunities (accepted/rejected).
+
+#### 2. **Rewards**
+The reward function can be defined as follows:
+
+```plaintext
+reward = revenues - costs - penalties
+```
+
+Where:
+- **Revenues**:
+  - From term cargoes: 
+    - `term_revenue = number_of_term_cargoes * $80M`
+  - From spot cargoes (considering probabilistic acceptance):
+    - `spot_revenue = sum(accepted_spot_cargoes * expected_spot_price)`
+    - `expected_spot_price = (0.7 * average_spot_price) + (0.3 * penalty_for_rejection)`
+  
+- **Costs**:
+  - Demurrage costs:
+    - `demurrage_cost = days_delayed * $50k`
+  - Boil-off costs:
+    - `boil_off_cost = days_held * $200k`
+  
+- **Penalties**:
+  - Off-spec HHV penalties:
+    - `off_spec_penalty = $2M * (1 - probability_of_compliance)`
+  - Tank-top penalties:
+    - `tank_top_penalty = $5M * (tank_levels > 95% capacity)`
+
+#### 3. **Probabilistic Effects**
+Incorporat...
+INFO:root:--------------------------------------------------------------------------------
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:LLM RESPONSE:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:Here's a consolidated PPDDL reward formulation for the LNG offtake optimization problem, integrating all the components discussed:
+
+### PPDDL Reward Structure
+
+```plaintext
+(:reward
+  (define (maximize_expected_net_value)
+    (+ 
+      (* (number_of_term_cargoes) 80000000) ; Revenue from term cargoes
+      (sum (map (lambda (spot) 
+                    (if (accepted? spot) 
+                        (expected_spot_price spot) 
+                        0))
+                  spot_opportunities)) ; Revenue from accepted spot cargoes
+      (- 
+        (* (days_delayed) 50000) ; Demurrage costs
+        (* (days_held) 200000)   ; Boil-off costs
+        (* (1 - probability_of_compliance) 2000000) ; Off-spec HHV penalties
+        (if (> tank_levels 95) 5000000 0) ; Tank-top penalties
+      )
+    )
+  )
+)
+```
+
+### Explanation of Components
+
+1. **Revenues**:
+   - **Term Cargo Revenue**: Calculated as the product of the number of term cargoes and the fixed revenue per cargo ($80M).
+   - **Spot Cargo Revenue**: Summed from accepted spot cargoes, where each accepted cargo's revenue is determined by the expected spot price.
+
+2. **Costs**:
+   - **Demurrage Costs**: Based on the number of days delayed multiplied by the cost per day ($50k).
+   - **Boil-off Costs**: Calculated from the number of days LNG is held multiplied by the boil-off cost per day ($200k).
+
+3. **Penalties**:
+   - **Off-spec HHV Penalties**: Applied when the probability of compliance is less than 1, incurring a penalty of $2M for each unit of non-compliance.
+   - **Tank-top Penalties**: A penalty of $5M is applied if tank levels exceed 95% capacity.
+
+### Probabilistic Effects
+The reward function incorporates uncertainties through the following mechanisms:
+- **HHV Quality**: The compliance probability is derived from a normal distribution of HHV quality.
+- **Vessel ETA**: Arrival times are modeled with a uniform distribution, affecting loading schedules.
+- **Spot Price**: Spot prices are modeled as a uniform distributio...
+INFO:root:================================================================================
+INFO:root:================================================================================
+INFO:root:LLM PROMPT:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:Consolidate the above responses into one final answer that is consistent and deduplicated.
+
+Response 1:
+Here's a consolidated PPDDL reward formulation for the LNG offtake optimization problem, integrating all the components discussed:
+
+### PPDDL Reward Structure
+
+```plaintext
+(:reward
+  (define (expected_net_value)
+    (+ (sum 
+          (if (loaded_term_cargo) 80000000 0)  ; Reward for successfully loading term cargo
+          (if (loaded_spot_cargo) (sample_uniform 85000000 95000000) 0)  ; Reward for successfully loading spot cargo
+        )
+        (- (* 50000 demurrage_days)  ; Cost for demurrage based on delayed loading
+           (* 200000 boil_off_days)  ; Cost for boil-off based on days LNG is held
+           (if (off_spec_hhv) 2000000 0)  ; Penalty for off-spec HHV
+           (if (tank_top_risk) 5000000 0)  ; Penalty for tank-top risk
+        )
+      )
+    )
+  )
+)
+```
+
+### Explanation of Components
+
+1. **Revenues**:
+   - **Term Cargo Revenue**: A fixed reward of $80M is granted when a term cargo is successfully loaded.
+   - **Spot Cargo Revenue**: The reward for loading a spot cargo is drawn from a uniform distribution between $85M and $95M.
+
+2. **Costs**:
+   - **Demurrage Cost**: A cost of $50K per day is incurred for each day of delay in loading.
+   - **Boil-off Cost**: A cost of $200K is incurred for each day LNG is held in tanks.
+
+3. **Penalties**:
+   - **Off-spec HHV Penalty**: A penalty of $2M is applied if the HHV quality is outside the acceptable range.
+   - **Tank-top Penalty**: A penalty of $5M is incurred if tank levels exceed 95% full.
+
+### Probabilistic Effects
+The reward function inherently accounts for uncertainties through:
+- **Spot Price Uncertainty**: The reward for spot cargoes is probabilistic, reflecting the variability in market prices.
+- **Quality and Timing Uncertainties**: While not explicitly modeled in the reward function, the penalties and costs can be influenced by the probabilistic nature of HHV quality and vessel arrival times...
+INFO:root:--------------------------------------------------------------------------------
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:LLM RESPONSE:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:Here's a consolidated and deduplicated PPDDL reward formulation for the LNG offtake optimization problem, integrating all discussed components into a cohesive structure:
+
+### PPDDL Reward Structure for LNG Offtake Optimization
+
+```plaintext
+(:reward
+  (define (maximize_expected_net_value)
+    (+ 
+      (* (number_of_term_cargoes) 80000000) ; Revenue from term cargoes
+      (sum (map (lambda (spot) 
+                    (if (accepted? spot) 
+                        (sample_uniform 85000000 95000000) 
+                        0))
+                  spot_opportunities)) ; Revenue from accepted spot cargoes
+      (- 
+        (* (days_delayed) 50000) ; Demurrage costs
+        (* (days_held) 200000)   ; Boil-off costs
+        (* (1 - probability_of_compliance) 2000000) ; Off-spec HHV penalties
+        (if (> tank_levels 95) 5000000 0) ; Tank-top penalties
+      )
+    )
+  )
+)
+```
+
+### Explanation of Components
+
+1. **Revenues**:
+   - **Term Cargo Revenue**: Calculated as the product of the number of term cargoes and a fixed revenue of $80M per cargo.
+   - **Spot Cargo Revenue**: Summed from accepted spot cargoes, where each accepted cargo's revenue is drawn from a uniform distribution between $85M and $95M.
+
+2. **Costs**:
+   - **Demurrage Costs**: Based on the number of days delayed multiplied by $50K per day.
+   - **Boil-off Costs**: Calculated from the number of days LNG is held multiplied by $200K per day.
+
+3. **Penalties**:
+   - **Off-spec HHV Penalties**: A penalty of $2M is incurred for each unit of non-compliance when HHV quality is outside the acceptable range.
+   - **Tank-top Penalties**: A penalty of $5M is applied if tank levels exceed 95% capacity.
+
+### Probabilistic Effects
+The reward function incorporates uncertainties through:
+- **Spot Price Uncertainty**: The revenue from spot cargoes is probabilistic, reflecting variability in market prices.
+- **Quality and Timing Uncertainties**: The compliance probability for HHV quality is derived from a normal distribution...
+INFO:root:================================================================================
+INFO:root:Synthesizing PPDDL domain and problem...
+INFO:root:================================================================================
+INFO:root:LLM PROMPT:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:
+You are a meticulous PPDDL (Probabilistic PDDL) code generator for probabilistic planning.
+Target style: PPDDL compatible with probabilistic-ff planner.
+
+Output EXACTLY two sections delimited by markers:
+===DOMAIN===
+<ppddl domain>
+===PROBLEM===
+<ppddl problem>
+
+CRITICAL: Use ONLY these requirements (probabilistic-ff compatible):
+:requirements :strips :typing :negation :equality :conditional-effects :adl
+
+DO NOT use: :negative-preconditions, :probabilistic-effects, :rewards, :numeric-fluents, :functions, :metric
+
+For probabilistic effects, use (whenp <probability> <effect>) syntax instead of (probabilistic ...).
+Use predicates only (no numeric fluents). Time and battery should be modeled as predicates, not functions.
+Goals must include a probability: (:goal <probability> <goal-predicate>)
+
+Time is discrete minutes; battery is integer [0..100].
+Actions: charge, drive(param by duration/speed), diagnostics(no benefit), dock.
+Encode constraints faithfully using predicates and conditional effects.
+
+[Variables]
+Based on the LNG offtake optimization problem, here is a consolidated and refined list of PPDDL types, predicates, and functions:
+
+### Types
+1. **Trains**
+   - `train1`
+   - `train2`
+
+2. **Tanks**
+   - `tankA`
+   - `tankB`
+   - `tankC`
+
+3. **Vessels**
+   - `vessel` (generic type for all vessels)
+
+4. **Cargoes**
+   - `term_cargo`
+   - `spot_cargo`
+
+5. **Time Periods**
+   - `day` (representing specific time periods within a 30-day horizon)
+
+### Predicates
+1. **Tank Levels**
+   - `tank_level(tank, level)`: Represents the current level of gas in a specific tank.
+   - `tank_full(tank)`: Indicates if a tank is over 95% full.
+   - `tank_min_heel(tank)`: Indicates if a tank has at least 10% heel remaining.
+
+2. **Berth Occupancy**
+   - `berth_occupied(vessel)`: Indicates if a vessel is currently occupying the berth.
+   - `berth_available`: Indicates if the berth is available for a new vessel.
+
+3. **Vessel Arrival**
+   - `vessel_arrived(vessel, time)`: Indicates if a vessel...
+INFO:root:--------------------------------------------------------------------------------
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:LLM RESPONSE:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:```ppddl
+===DOMAIN===
+(define (domain lng-offtake)
+  (:requirements :strips :typing :negation :equality :conditional-effects :adl)
+  (:types 
+    train1 train2 - Trains
+    tankA tankB tankC - Tanks
+    vessel - Vessels
+    term_cargo spot_cargo - Cargoes
+    day - Time Periods
+  )
+  
+  (:predicates
+    (tank_level ?t - Tanks ?level - number)
+    (tank_full ?t - Tanks)
+    (tank_min_heel ?t - Tanks)
+    (berth_occupied ?v - Vessels)
+    (berth_available)
+    (vessel_arrived ?v - Vessels ?time - day)
+    (vessel_eta ?v - Vessels ?time - day)
+    (cargo_loaded ?c - Cargoes ?v - Vessels)
+    (cargo_accepted ?c - Cargoes)
+    (cargo_timing ?c - Cargoes ?start_time - day ?end_time - day)
+    (hhv_within_spec ?c - Cargoes)
+    (operational_buffer ?t - Tanks)
+  )
+
+  (:action charge
+    :precondition (and (tank_min_heel ?t) (not (tank_full ?t)))
+    :effect (whenp 0.9 (tank_level ?t (+ (tank_level ?t) 10)))
+  )
+
+  (:action drive
+    :parameters (?v - Vessels ?duration - number)
+    :precondition (and (berth_occupied ?v) (berth_available))
+    :effect (whenp 0.8 (berth_occupied ?v))
+  )
+
+  (:action diagnostics
+    :parameters (?v - Vessels)
+    :precondition (berth_occupied ?v)
+    :effect (whenp 0.5 (cargo_loaded term_cargo ?v))
+  )
+
+  (:action dock
+    :parameters (?v - Vessels)
+    :precondition (berth_available)
+    :effect (whenp 0.9 (berth_occupied ?v))
+  )
+)
+===PROBLEM===
+(define (problem lng-offtake-problem)
+  (:domain lng-offtake)
+  (:objects 
+    train1 train2 - Trains
+    tankA tankB tankC - Tanks
+    vessel - Vessels
+    term_cargo spot_cargo - Cargoes
+    day1 day2 day3 - Time Periods
+  )
+  
+  (:init 
+    (tank_level tankA 100)
+    (tank_level tankB 90)
+    (tank_level tankC 80)
+    (not (berth_occupied vessel))
+    (berth_available)
+    (cargo_accepted term_cargo)
+    (cargo_accepted spot_cargo)
+    (hhv_within_spec term_cargo)
+    (hhv_within_spec spot_cargo)
+  )
+
+  (:goal 
+    (:goal 0.9 (cargo_loaded term_cargo vessel))
+  )
+)
+```
+INFO:root:================================================================================
+INFO:root:✓ Baseline synthesis complete in 304.30s
+INFO:root:  Domain: 1368 chars
+INFO:root:  Problem: 523 chars
+INFO:root:Running planner on baseline PPDDL...
+INFO:root:
+================================================================================
+INFO:root:HYBRID APPROACH: CTBurton + LLM
+INFO:root:================================================================================
+INFO:root:Converting CTBurton → MiniZinc → PPDDL via LLM...
+INFO:root:Extracted MiniZinc constraints (structured, formal)
+INFO:root:MiniZinc preview: % Problem: lng_offtake
+% Description: LNG Offtake Optimization Problem
+
+Goal: Maximize value realization over a rolling 30-day horizon by meeting term contract obligations and exploiting probabilistic spot cargo opportunities, while explicitly representing uncertainty in product quality (HHV), vessel arrival times, and spot prices.
+
+Physical Context:
+- Two LNG trains operate in parallel with fixed upstream feed blends:
+  * Train 2 (ConocoPhillips Cascade): 100% Field 2, leaner gas (HHV: 1050-107...
+INFO:root:================================================================================
+INFO:root:LLM PROMPT:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:
+You are translating structured MiniZinc constraints to PPDDL.
+
+The problem is: LNG Offtake Optimization Problem
+
+Goal: Maximize value realization over a rolling 30-day horizon by meeting term contract obligations and exploiting probabilistic spot cargo opportunities, while explicitly representing uncertainty in product quality (HHV), vessel arrival times, and spot prices.
+
+Physical Context:
+- Two LNG trains operate in parallel with fixed upstream feed blends:
+  * Train 2 (ConocoPhillips Cascade): 100% Field 2, leaner gas (HHV: 1050-1070 BTU/scf, mean=1060, uncertainty ±10)
+  * Train 1 (Shell Mixed Refrigerant): 41-59% Field 1:Field 2 ratio (HHV: 1080-1100 BTU/scf, mean=1090, uncertainty ±10)
+- Field 2 is ramping up (production increasing 5% per week) while Field 1 ramps down
+- Production rates: Train 1: 4.5 MTPA, Train 2: 5.0 MTPA (maximized subject to maintenance)
+- Storage: 3 tanks (Tank A: 180k m³, Tank B: 180k m³, Tank C: 160k m³)
+- Tank connectivity: Train 1 → Tank A, B; Train 2 → Tank B, C; All tanks → Berth
+- Berth: Single berth with 24hr turnaround time between vessels
+
+Decisions:
+1. Cargo timing: load start/end within laycan windows (term contracts have ±2 day flexibility)
+2. Vessel sequencing and berth assignment (no overlap, 24hr clearance)
+3. Tank withdrawals per cargo (which tanks feed which cargo, respecting connectivity)
+4. Spot cargo acceptance: binary decision per opportunity (5 spot opportunities over horizon)
+5. Operational buffers: maintain 20% tank headroom to absorb ETA variance
+
+Objectives:
+- Primary: Maximize expected net value = revenues - costs - penalties
+- Revenues: Term cargoes ($80M each, 75k m³), Spot cargoes ($85-95M, 70k m³, price uncertain)
+- Costs: Demurrage ($50k/day if loading delayed), boil-off ($200k/day tank holding)
+- Penalties: Off-spec HHV ($2M penalty if outside 1055-1095 BTU/scf), tank-top risk ($5M if >95% full)
+
+Uncertainties:
+1. Product quality (HHV): Distributions per train with ±10 BTU/scf variance, evolving as Fiel...
+INFO:root:--------------------------------------------------------------------------------
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:LLM RESPONSE:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:===DOMAIN===
+(define (domain lng-offtake-optimization)
+  (:requirements :strips :typing :negation :equality :conditional-effects :adl)
+  (:types 
+    train 
+    tank 
+    vessel 
+    cargo 
+    berth 
+    time 
+    quality 
+    opportunity 
+  )
+  
+  (:predicates 
+    (train1-blend-ratio) 
+    (train2-blend-ratio) 
+    (train1-production-rate) 
+    (train2-production-rate) 
+    (train1-hhv) 
+    (train2-hhv) 
+    (field2-ramp-up) 
+    (field1-ramp-down) 
+    (tank-a-capacity) 
+    (tank-b-capacity) 
+    (tank-c-capacity) 
+    (tank-connectivity) 
+    (tank-withdrawal) 
+    (tank-top-risk) 
+    (operational-buffer) 
+    (boil-off-cost) 
+    (berth-capacity) 
+    (berth-turnaround) 
+    (loading-rate) 
+    (tidal-windows) 
+    (demurrage-cost) 
+    (term-contracts) 
+    (term-laycan-windows) 
+    (term-laycan-compliance) 
+    (spot-opportunities) 
+    (spot-prices) 
+    (spot-acceptance-probability) 
+    (spot-decision) 
+    (hhv-specification) 
+    (hhv-compliance-probability) 
+    (hhv-penalty) 
+    (cargo-hhv) 
+    (tank-hhv-evolution) 
+    (planning-horizon) 
+    (time-discretization) 
+    (vessel-eta-uncertainty) 
+    (uncertainty1) 
+    (uncertainty2) 
+    (uncertainty3) 
+    (uncertainty4) 
+    (uncertainty5) 
+    (uncertainty6) 
+    (objectives)
+  )
+
+  (:action enforce-train1-blend-ratio
+    :precondition (and)
+    :effect (train1-blend-ratio)
+  )
+
+  (:action enforce-train2-blend-ratio
+    :precondition (and)
+    :effect (train2-blend-ratio)
+  )
+
+  (:action enforce-train1-production-rate
+    :precondition (and)
+    :effect (train1-production-rate)
+  )
+
+  (:action enforce-train2-production-rate
+    :precondition (and)
+    :effect (train2-production-rate)
+  )
+
+  (:action enforce-train1-hhv
+    :precondition (and)
+    :effect (train1-hhv)
+  )
+
+  (:action enforce-train2-hhv
+    :precondition (and)
+    :effect (train2-hhv)
+  )
+
+  (:action enforce-field2-ramp-up
+    :precondition (and)
+    :effect (field2-ramp-up)
+  )
+
+  (:action enforce-field1-ramp-down
+    :precond...
+INFO:root:================================================================================
+INFO:root:Registered tank_a_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_b_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_c_level: range=[0.0, 160000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=159000.00
+INFO:lng_semantics:Initialized LNG semantic NeuroSym graph.
+INFO:RobustnessPipeline:LNG semantic layer enabled (NeuroSym graph initialized).
+INFO:RobustnessPipeline:RobustnessPipeline initialized with Industrial-Grade upgrades.
+INFO:root:Applied safety buffers to discretized variables
+INFO:root:Translated MiniZinc → PPDDL via LLM (with structured constraints)
+INFO:root:Registered tank_a_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_b_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_c_level: range=[0.0, 160000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=159000.00
+INFO:lng_semantics:Initialized LNG semantic NeuroSym graph.
+INFO:RobustnessPipeline:LNG semantic layer enabled (NeuroSym graph initialized).
+INFO:RobustnessPipeline:RobustnessPipeline initialized with Industrial-Grade upgrades.
+INFO:RobustnessPipeline:ROBUSTNESS FIX #1 & #3: PPDDL Model & Physics Checking
+INFO:root:✓ Model checking: All MiniZinc invariants properly enforced
+INFO:root:✓ Hybrid synthesis complete in 29.56s
+INFO:root:  Domain: 5553 chars
+INFO:root:  Problem: 1482 chars
+INFO:root:Running planner on hybrid PPDDL...
+INFO:root:
+================================================================================
+INFO:root:ADAPTIVE APPROACH: Continuous Learning + HHV Uncertainty
+INFO:root:================================================================================
+INFO:root:Iterations: 10, Observations per iteration: 10
+INFO:root:Registered tank_a_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_b_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_c_level: range=[0.0, 160000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=159000.00
+INFO:lng_semantics:Initialized LNG semantic NeuroSym graph.
+INFO:RobustnessPipeline:LNG semantic layer enabled (NeuroSym graph initialized).
+INFO:RobustnessPipeline:RobustnessPipeline initialized with Industrial-Grade upgrades.
+INFO:root:
+--- Iteration 1/10 ---
+INFO:RobustnessPipeline:Kalman (Train 1): μ=1102.9, trend=2.231 (damped)
+INFO:RobustnessPipeline:Kalman (Train 2): μ=1060.7, trend=-0.499 (damped)
+INFO:root:  Train 1 HHV: 1102.9 ± 4.3 BTU/scf (true=1088.0, error=14.9, trend=2.231 BTU/scf per obs)
+INFO:root:  Train 2 HHV: 1060.7 ± 4.3 BTU/scf (true=1062.0, error=1.3, trend=-0.499 BTU/scf per obs)
+INFO:root:  Spot Market: Price=$93.0M, Available=True
+INFO:root:Extracted MiniZinc constraints (structured, formal)
+INFO:root:MiniZinc preview: % Problem: lng_offtake
+% Description: LNG Offtake Optimization Problem
+
+Goal: Maximize value realization over a rolling 30-day horizon by meeting term contract obligations and exploiting probabilistic spot cargo opportunities, while explicitly representing uncertainty in product quality (HHV), vessel arrival times, and spot prices.
+
+Physical Context:
+- Two LNG trains operate in parallel with fixed upstream feed blends:
+  * Train 2 (ConocoPhillips Cascade): 100% Field 2, leaner gas (HHV: 1052-106...
+INFO:root:================================================================================
+INFO:root:LLM PROMPT:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:
+You are translating structured MiniZinc constraints to PPDDL.
+
+The problem is: LNG Offtake Optimization Problem
+
+Goal: Maximize value realization over a rolling 30-day horizon by meeting term contract obligations and exploiting probabilistic spot cargo opportunities, while explicitly representing uncertainty in product quality (HHV), vessel arrival times, and spot prices.
+
+Physical Context:
+- Two LNG trains operate in parallel with fixed upstream feed blends:
+  * Train 2 (ConocoPhillips Cascade): 100% Field 2, leaner gas (HHV: 1052-1069 BTU/scf, mean=1061, uncertainty ±4)
+  * Train 1 (Shell Mixed Refrigerant): 41-59% Field 1:Field 2 ratio (HHV: 1094-1112 BTU/scf, mean=1103, uncertainty ±4)
+- Field 2 is ramping up (production increasing 5% per week) while Field 1 ramps down
+- Production rates: Train 1: 4.5 MTPA, Train 2: 5.0 MTPA (maximized subject to maintenance)
+- Storage: 3 tanks (Tank A: 180k m³, Tank B: 180k m³, Tank C: 160k m³)
+- Tank connectivity: Train 1 → Tank A, B; Train 2 → Tank B, C; All tanks → Berth
+- Berth: Single berth with 24hr turnaround time between vessels
+
+Decisions:
+1. Cargo timing: load start/end within laycan windows (term contracts have ±2 day flexibility)
+2. Vessel sequencing and berth assignment (no overlap, 24hr clearance)
+3. Tank withdrawals per cargo (which tanks feed which cargo, respecting connectivity)
+4. Spot cargo acceptance: binary decision per opportunity (5 spot opportunities over horizon)
+5. Operational buffers: maintain 20% tank headroom to absorb ETA variance
+
+Objectives:
+- Primary: Maximize expected net value = revenues - costs - penalties
+- Revenues: Term cargoes ($80M each, 75k m³), Spot cargoes ($85-95M, 70k m³, price uncertain)
+- Costs: Demurrage ($50k/day if loading delayed), boil-off ($200k/day tank holding)
+- Penalties: Off-spec HHV ($2M penalty if outside 1055-1095 BTU/scf), tank-top risk ($5M if >95% full)
+
+Uncertainties:
+1. Product quality (HHV): Distributions per train with ±10 BTU/scf variance, evolving as Field ...
+INFO:root:--------------------------------------------------------------------------------
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:LLM RESPONSE:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:===DOMAIN===
+(define (domain lng-offtake-optimization)
+  (:requirements :strips :typing :negation :equality :conditional-effects :adl)
+  (:types 
+    train 
+    tank 
+    vessel 
+    cargo 
+    berth 
+    time 
+    hhv 
+    spot 
+  )
+  
+  (:predicates 
+    (train1-blend-ratio) 
+    (train2-blend-ratio) 
+    (train1-production-rate) 
+    (train2-production-rate) 
+    (train1-hhv) 
+    (train2-hhv) 
+    (field2-ramp-up) 
+    (field1-ramp-down) 
+    (tank-a-capacity) 
+    (tank-b-capacity) 
+    (tank-c-capacity) 
+    (tank-connectivity) 
+    (tank-withdrawal) 
+    (tank-top-risk) 
+    (operational-buffer) 
+    (boil-off-cost) 
+    (berth-capacity) 
+    (berth-turnaround) 
+    (loading-rate) 
+    (tidal-windows) 
+    (demurrage-cost) 
+    (term-contracts) 
+    (term-laycan-windows) 
+    (term-laycan-compliance) 
+    (spot-opportunities) 
+    (spot-prices) 
+    (spot-acceptance-probability) 
+    (spot-decision) 
+    (hhv-specification) 
+    (hhv-compliance-probability) 
+    (hhv-penalty) 
+    (cargo-hhv) 
+    (tank-hhv-evolution) 
+    (planning-horizon) 
+    (time-discretization) 
+    (vessel-eta-uncertainty) 
+    (uncertainty1) 
+    (uncertainty2) 
+    (uncertainty3) 
+    (uncertainty4) 
+    (uncertainty5) 
+    (uncertainty6) 
+  )
+
+  (:action enforce-train1-blend-ratio
+    :precondition (not (train1-blend-ratio))
+    :effect (train1-blend-ratio)
+  )
+
+  (:action enforce-train2-blend-ratio
+    :precondition (not (train2-blend-ratio))
+    :effect (train2-blend-ratio)
+  )
+
+  (:action enforce-train1-production-rate
+    :precondition (not (train1-production-rate))
+    :effect (train1-production-rate)
+  )
+
+  (:action enforce-train2-production-rate
+    :precondition (not (train2-production-rate))
+    :effect (train2-production-rate)
+  )
+
+  (:action enforce-train1-hhv
+    :precondition (not (train1-hhv))
+    :effect (train1-hhv)
+  )
+
+  (:action enforce-train2-hhv
+    :precondition (not (train2-hhv))
+    :effect (train2-hhv)
+  )
+
+  (:action enforce-field2-ramp-up
+    :preconditio...
+INFO:root:================================================================================
+INFO:root:Registered tank_a_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_b_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_c_level: range=[0.0, 160000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=159000.00
+INFO:lng_semantics:Initialized LNG semantic NeuroSym graph.
+INFO:RobustnessPipeline:LNG semantic layer enabled (NeuroSym graph initialized).
+INFO:RobustnessPipeline:RobustnessPipeline initialized with Industrial-Grade upgrades.
+INFO:root:Applied safety buffers to discretized variables
+INFO:root:Translated MiniZinc → PPDDL via LLM (with structured constraints)
+INFO:root:Registered tank_a_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_b_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_c_level: range=[0.0, 160000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=159000.00
+INFO:lng_semantics:Initialized LNG semantic NeuroSym graph.
+INFO:RobustnessPipeline:LNG semantic layer enabled (NeuroSym graph initialized).
+INFO:RobustnessPipeline:RobustnessPipeline initialized with Industrial-Grade upgrades.
+INFO:RobustnessPipeline:ROBUSTNESS FIX #1 & #3: PPDDL Model & Physics Checking
+INFO:root:✓ Model checking: All MiniZinc invariants properly enforced
+INFO:RobustnessPipeline:ROBUSTNESS FIX #1 & #3: PPDDL Model & Physics Checking
+INFO:RobustnessPipeline:ROBUSTNESS FIX #5: FF-REPLAN-Approximation: Plan found via determinization.
+INFO:root:  ✗ No plan found
+INFO:root:
+--- Iteration 2/10 ---
+INFO:RobustnessPipeline:Kalman (Train 1): μ=1100.3, trend=1.162 (damped)
+INFO:RobustnessPipeline:Kalman (Train 2): μ=1057.0, trend=-0.575 (damped)
+INFO:root:  Train 1 HHV: 1100.3 ± 4.3 BTU/scf (true=1088.0, error=12.3, trend=1.162 BTU/scf per obs)
+INFO:root:  Train 2 HHV: 1057.0 ± 4.3 BTU/scf (true=1062.0, error=5.0, trend=-0.575 BTU/scf per obs)
+INFO:root:  Spot Market: Price=$90.4M, Available=True
+INFO:root:Extracted MiniZinc constraints (structured, formal)
+INFO:root:MiniZinc preview: % Problem: lng_offtake
+% Description: LNG Offtake Optimization Problem
+
+Goal: Maximize value realization over a rolling 30-day horizon by meeting term contract obligations and exploiting probabilistic spot cargo opportunities, while explicitly representing uncertainty in product quality (HHV), vessel arrival times, and spot prices.
+
+Physical Context:
+- Two LNG trains operate in parallel with fixed upstream feed blends:
+  * Train 2 (ConocoPhillips Cascade): 100% Field 2, leaner gas (HHV: 1048-106...
+INFO:root:================================================================================
+INFO:root:LLM PROMPT:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:
+You are translating structured MiniZinc constraints to PPDDL.
+
+The problem is: LNG Offtake Optimization Problem
+
+Goal: Maximize value realization over a rolling 30-day horizon by meeting term contract obligations and exploiting probabilistic spot cargo opportunities, while explicitly representing uncertainty in product quality (HHV), vessel arrival times, and spot prices.
+
+Physical Context:
+- Two LNG trains operate in parallel with fixed upstream feed blends:
+  * Train 2 (ConocoPhillips Cascade): 100% Field 2, leaner gas (HHV: 1048-1065 BTU/scf, mean=1057, uncertainty ±4)
+  * Train 1 (Shell Mixed Refrigerant): 41-59% Field 1:Field 2 ratio (HHV: 1092-1109 BTU/scf, mean=1100, uncertainty ±4)
+- Field 2 is ramping up (production increasing 5% per week) while Field 1 ramps down
+- Production rates: Train 1: 4.5 MTPA, Train 2: 5.0 MTPA (maximized subject to maintenance)
+- Storage: 3 tanks (Tank A: 180k m³, Tank B: 180k m³, Tank C: 160k m³)
+- Tank connectivity: Train 1 → Tank A, B; Train 2 → Tank B, C; All tanks → Berth
+- Berth: Single berth with 24hr turnaround time between vessels
+
+Decisions:
+1. Cargo timing: load start/end within laycan windows (term contracts have ±2 day flexibility)
+2. Vessel sequencing and berth assignment (no overlap, 24hr clearance)
+3. Tank withdrawals per cargo (which tanks feed which cargo, respecting connectivity)
+4. Spot cargo acceptance: binary decision per opportunity (5 spot opportunities over horizon)
+5. Operational buffers: maintain 20% tank headroom to absorb ETA variance
+
+Objectives:
+- Primary: Maximize expected net value = revenues - costs - penalties
+- Revenues: Term cargoes ($80M each, 75k m³), Spot cargoes ($85-95M, 70k m³, price uncertain)
+- Costs: Demurrage ($50k/day if loading delayed), boil-off ($200k/day tank holding)
+- Penalties: Off-spec HHV ($2M penalty if outside 1055-1095 BTU/scf), tank-top risk ($5M if >95% full)
+
+Uncertainties:
+1. Product quality (HHV): Distributions per train with ±10 BTU/scf variance, evolving as Field ...
+INFO:root:--------------------------------------------------------------------------------
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:LLM RESPONSE:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:===DOMAIN===
+(define (domain lng-offtake-optimization)
+  (:requirements :strips :typing :negation :equality :conditional-effects :adl)
+  (:types 
+    train 
+    tank 
+    vessel 
+    cargo 
+    berth 
+    time 
+    hhv_quality 
+    spot_opportunity 
+  )
+  
+  (:predicates 
+    (train1_blend_ratio_fixed) 
+    (train2_blend_ratio_fixed) 
+    (train1_production_rate_fixed) 
+    (train2_production_rate_fixed) 
+    (train1_hhv_fixed) 
+    (train2_hhv_fixed) 
+    (field2_ramp_up_fixed) 
+    (field1_ramp_down_fixed) 
+    (tank_a_capacity_fixed) 
+    (tank_b_capacity_fixed) 
+    (tank_c_capacity_fixed) 
+    (tank_connectivity_fixed) 
+    (tank_withdrawal_fixed) 
+    (tank_top_risk_fixed) 
+    (operational_buffer_fixed) 
+    (boil_off_cost_fixed) 
+    (berth_capacity_fixed) 
+    (berth_turnaround_fixed) 
+    (loading_rate_fixed) 
+    (tidal_windows_fixed) 
+    (demurrage_cost_fixed) 
+    (term_contracts_fixed) 
+    (term_laycan_windows_fixed) 
+    (term_laycan_compliance_fixed) 
+    (spot_opportunities_fixed) 
+    (spot_prices_fixed) 
+    (spot_acceptance_probability_fixed) 
+    (spot_decision_fixed) 
+    (hhv_specification_fixed) 
+    (hhv_compliance_probability_fixed) 
+    (hhv_penalty_fixed) 
+    (cargo_hhv_fixed) 
+    (tank_hhv_evolution_fixed) 
+    (planning_horizon_fixed) 
+    (time_discretization_fixed) 
+    (vessel_eta_uncertainty_fixed) 
+    (uncertainty1_fixed) 
+    (uncertainty2_fixed) 
+    (uncertainty3_fixed) 
+    (uncertainty4_fixed) 
+    (uncertainty5_fixed) 
+    (uncertainty6_fixed) 
+  )
+)
+
+===PROBLEM===
+(define (problem lng-offtake-optimization-problem)
+  (:domain lng-offtake-optimization)
+  (:objects 
+    train1 train2 - train 
+    tankA tankB tankC - tank 
+    vessel1 vessel2 - vessel 
+    cargo1 cargo2 cargo3 cargo4 cargo5 - cargo 
+    berth1 - berth 
+    time1 time2 time3 time4 time5 - time 
+    hhv_quality1 hhv_quality2 - hhv_quality 
+    spot_opportunity1 spot_opportunity2 spot_opportunity3 spot_opportunity4 spot_opportunity5 - spot_opportunity 
+  )
+  (...
+INFO:root:================================================================================
+INFO:root:Registered tank_a_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_b_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_c_level: range=[0.0, 160000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=159000.00
+INFO:lng_semantics:Initialized LNG semantic NeuroSym graph.
+INFO:RobustnessPipeline:LNG semantic layer enabled (NeuroSym graph initialized).
+INFO:RobustnessPipeline:RobustnessPipeline initialized with Industrial-Grade upgrades.
+INFO:root:Applied safety buffers to discretized variables
+INFO:root:Translated MiniZinc → PPDDL via LLM (with structured constraints)
+INFO:root:Registered tank_a_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_b_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_c_level: range=[0.0, 160000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=159000.00
+INFO:lng_semantics:Initialized LNG semantic NeuroSym graph.
+INFO:RobustnessPipeline:LNG semantic layer enabled (NeuroSym graph initialized).
+INFO:RobustnessPipeline:RobustnessPipeline initialized with Industrial-Grade upgrades.
+INFO:RobustnessPipeline:ROBUSTNESS FIX #1 & #3: PPDDL Model & Physics Checking
+INFO:root:✓ Model checking: All MiniZinc invariants properly enforced
+INFO:RobustnessPipeline:ROBUSTNESS FIX #1 & #3: PPDDL Model & Physics Checking
+INFO:RobustnessPipeline:ROBUSTNESS FIX #5: FF-REPLAN-Approximation: Plan found via determinization.
+INFO:root:Plan comparison (iter 1 vs 2): similarity=1.000, length_diff=0
+INFO:root:  ✗ No plan found
+INFO:root:
+--- Iteration 3/10 ---
+INFO:RobustnessPipeline:Kalman (Train 1): μ=1091.9, trend=-0.416 (damped)
+INFO:RobustnessPipeline:Kalman (Train 2): μ=1055.1, trend=-0.768 (damped)
+INFO:root:  Train 1 HHV: 1091.9 ± 4.3 BTU/scf (true=1088.0, error=3.9, trend=-0.416 BTU/scf per obs)
+INFO:root:  Train 2 HHV: 1055.1 ± 4.3 BTU/scf (true=1062.0, error=6.9, trend=-0.768 BTU/scf per obs)
+INFO:root:  Spot Market: Price=$90.2M, Available=True
+INFO:root:Extracted MiniZinc constraints (structured, formal)
+INFO:root:MiniZinc preview: % Problem: lng_offtake
+% Description: LNG Offtake Optimization Problem
+
+Goal: Maximize value realization over a rolling 30-day horizon by meeting term contract obligations and exploiting probabilistic spot cargo opportunities, while explicitly representing uncertainty in product quality (HHV), vessel arrival times, and spot prices.
+
+Physical Context:
+- Two LNG trains operate in parallel with fixed upstream feed blends:
+  * Train 2 (ConocoPhillips Cascade): 100% Field 2, leaner gas (HHV: 1047-106...
+INFO:root:================================================================================
+INFO:root:LLM PROMPT:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:
+You are translating structured MiniZinc constraints to PPDDL.
+
+The problem is: LNG Offtake Optimization Problem
+
+Goal: Maximize value realization over a rolling 30-day horizon by meeting term contract obligations and exploiting probabilistic spot cargo opportunities, while explicitly representing uncertainty in product quality (HHV), vessel arrival times, and spot prices.
+
+Physical Context:
+- Two LNG trains operate in parallel with fixed upstream feed blends:
+  * Train 2 (ConocoPhillips Cascade): 100% Field 2, leaner gas (HHV: 1047-1064 BTU/scf, mean=1055, uncertainty ±4)
+  * Train 1 (Shell Mixed Refrigerant): 41-59% Field 1:Field 2 ratio (HHV: 1083-1100 BTU/scf, mean=1092, uncertainty ±4)
+- Field 2 is ramping up (production increasing 5% per week) while Field 1 ramps down
+- Production rates: Train 1: 4.5 MTPA, Train 2: 5.0 MTPA (maximized subject to maintenance)
+- Storage: 3 tanks (Tank A: 180k m³, Tank B: 180k m³, Tank C: 160k m³)
+- Tank connectivity: Train 1 → Tank A, B; Train 2 → Tank B, C; All tanks → Berth
+- Berth: Single berth with 24hr turnaround time between vessels
+
+Decisions:
+1. Cargo timing: load start/end within laycan windows (term contracts have ±2 day flexibility)
+2. Vessel sequencing and berth assignment (no overlap, 24hr clearance)
+3. Tank withdrawals per cargo (which tanks feed which cargo, respecting connectivity)
+4. Spot cargo acceptance: binary decision per opportunity (5 spot opportunities over horizon)
+5. Operational buffers: maintain 20% tank headroom to absorb ETA variance
+
+Objectives:
+- Primary: Maximize expected net value = revenues - costs - penalties
+- Revenues: Term cargoes ($80M each, 75k m³), Spot cargoes ($85-95M, 70k m³, price uncertain)
+- Costs: Demurrage ($50k/day if loading delayed), boil-off ($200k/day tank holding)
+- Penalties: Off-spec HHV ($2M penalty if outside 1055-1095 BTU/scf), tank-top risk ($5M if >95% full)
+
+Uncertainties:
+1. Product quality (HHV): Distributions per train with ±10 BTU/scf variance, evolving as Field ...
+INFO:root:--------------------------------------------------------------------------------
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:LLM RESPONSE:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:===DOMAIN===
+(define (domain lng-oil-offtake)
+  (:requirements :strips :typing :negation :equality :conditional-effects :adl)
+  (:types 
+    train 
+    tank 
+    vessel 
+    cargo 
+    berth 
+    time 
+    quality 
+    spot 
+  )
+  
+  (:predicates 
+    (fixed-blend-ratio-train1) 
+    (fixed-blend-ratio-train2) 
+    (production-rate-train1) 
+    (production-rate-train2) 
+    (hhv-train1) 
+    (hhv-train2) 
+    (field2-ramp-up) 
+    (field1-ramp-down) 
+    (tank-capacity-a) 
+    (tank-capacity-b) 
+    (tank-capacity-c) 
+    (tank-connectivity) 
+    (tank-withdrawal) 
+    (tank-top-risk) 
+    (operational-buffer) 
+    (boil-off-cost) 
+    (berth-capacity) 
+    (berth-turnaround) 
+    (loading-rate) 
+    (tidal-windows) 
+    (demurrage-cost) 
+    (term-contracts) 
+    (term-laycan-windows) 
+    (term-laycan-compliance) 
+    (spot-opportunities) 
+    (spot-prices) 
+    (spot-acceptance-probability) 
+    (spot-decision) 
+    (hhv-specification) 
+    (hhv-compliance-probability) 
+    (hhv-penalty) 
+    (cargo-hhv) 
+    (tank-hhv-evolution) 
+    (planning-horizon) 
+    (time-discretization) 
+    (vessel-eta-uncertainty) 
+    (uncertainty1) 
+    (uncertainty2) 
+    (uncertainty3) 
+    (uncertainty4) 
+    (uncertainty5) 
+    (uncertainty6) 
+  )
+
+  (:action enforce-fixed-blend-ratio-train1
+    :precondition (and)
+    :effect (fixed-blend-ratio-train1)
+  )
+
+  (:action enforce-fixed-blend-ratio-train2
+    :precondition (and)
+    :effect (fixed-blend-ratio-train2)
+  )
+
+  (:action enforce-production-rate-train1
+    :precondition (and)
+    :effect (production-rate-train1)
+  )
+
+  (:action enforce-production-rate-train2
+    :precondition (and)
+    :effect (production-rate-train2)
+  )
+
+  (:action enforce-hhv-train1
+    :precondition (and)
+    :effect (hhv-train1)
+  )
+
+  (:action enforce-hhv-train2
+    :precondition (and)
+    :effect (hhv-train2)
+  )
+
+  (:action enforce-field2-ramp-up
+    :precondition (and)
+    :effect (field2-ramp-up)
+  )
+
+  (:action enforce-field1-ramp-down
+    :prec...
+INFO:root:================================================================================
+INFO:root:Registered tank_a_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_b_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_c_level: range=[0.0, 160000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=159000.00
+INFO:lng_semantics:Initialized LNG semantic NeuroSym graph.
+INFO:RobustnessPipeline:LNG semantic layer enabled (NeuroSym graph initialized).
+INFO:RobustnessPipeline:RobustnessPipeline initialized with Industrial-Grade upgrades.
+INFO:root:Applied safety buffers to discretized variables
+INFO:root:Translated MiniZinc → PPDDL via LLM (with structured constraints)
+INFO:root:Registered tank_a_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_b_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_c_level: range=[0.0, 160000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=159000.00
+INFO:lng_semantics:Initialized LNG semantic NeuroSym graph.
+INFO:RobustnessPipeline:LNG semantic layer enabled (NeuroSym graph initialized).
+INFO:RobustnessPipeline:RobustnessPipeline initialized with Industrial-Grade upgrades.
+INFO:RobustnessPipeline:ROBUSTNESS FIX #1 & #3: PPDDL Model & Physics Checking
+INFO:root:✓ Model checking: All MiniZinc invariants properly enforced
+INFO:RobustnessPipeline:ROBUSTNESS FIX #1 & #3: PPDDL Model & Physics Checking
+INFO:RobustnessPipeline:ROBUSTNESS FIX #5: FF-REPLAN-Approximation: Plan found via determinization.
+INFO:root:Plan comparison (iter 2 vs 3): similarity=1.000, length_diff=0
+INFO:root:  ✗ No plan found
+INFO:root:
+--- Iteration 4/10 ---
+INFO:RobustnessPipeline:Kalman (Train 1): μ=1084.1, trend=-0.954 (damped)
+INFO:RobustnessPipeline:Kalman (Train 2): μ=1068.8, trend=2.098 (damped)
+INFO:root:  Train 1 HHV: 1084.1 ± 4.3 BTU/scf (true=1088.0, error=3.9, trend=-0.954 BTU/scf per obs)
+INFO:root:  Train 2 HHV: 1068.8 ± 4.3 BTU/scf (true=1062.0, error=6.8, trend=2.098 BTU/scf per obs)
+INFO:root:  Spot Market: Price=$84.4M, Available=False
+INFO:root:Extracted MiniZinc constraints (structured, formal)
+INFO:root:MiniZinc preview: % Problem: lng_offtake
+% Description: LNG Offtake Optimization Problem
+
+Goal: Maximize value realization over a rolling 30-day horizon by meeting term contract obligations and exploiting probabilistic spot cargo opportunities, while explicitly representing uncertainty in product quality (HHV), vessel arrival times, and spot prices.
+
+Physical Context:
+- Two LNG trains operate in parallel with fixed upstream feed blends:
+  * Train 2 (ConocoPhillips Cascade): 100% Field 2, leaner gas (HHV: 1060-107...
+INFO:root:================================================================================
+INFO:root:LLM PROMPT:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:
+You are translating structured MiniZinc constraints to PPDDL.
+
+The problem is: LNG Offtake Optimization Problem
+
+Goal: Maximize value realization over a rolling 30-day horizon by meeting term contract obligations and exploiting probabilistic spot cargo opportunities, while explicitly representing uncertainty in product quality (HHV), vessel arrival times, and spot prices.
+
+Physical Context:
+- Two LNG trains operate in parallel with fixed upstream feed blends:
+  * Train 2 (ConocoPhillips Cascade): 100% Field 2, leaner gas (HHV: 1060-1077 BTU/scf, mean=1069, uncertainty ±4)
+  * Train 1 (Shell Mixed Refrigerant): 41-59% Field 1:Field 2 ratio (HHV: 1076-1093 BTU/scf, mean=1084, uncertainty ±4)
+- Field 2 is ramping up (production increasing 5% per week) while Field 1 ramps down
+- Production rates: Train 1: 4.5 MTPA, Train 2: 5.0 MTPA (maximized subject to maintenance)
+- Storage: 3 tanks (Tank A: 180k m³, Tank B: 180k m³, Tank C: 160k m³)
+- Tank connectivity: Train 1 → Tank A, B; Train 2 → Tank B, C; All tanks → Berth
+- Berth: Single berth with 24hr turnaround time between vessels
+
+Decisions:
+1. Cargo timing: load start/end within laycan windows (term contracts have ±2 day flexibility)
+2. Vessel sequencing and berth assignment (no overlap, 24hr clearance)
+3. Tank withdrawals per cargo (which tanks feed which cargo, respecting connectivity)
+4. Spot cargo acceptance: binary decision per opportunity (5 spot opportunities over horizon)
+5. Operational buffers: maintain 20% tank headroom to absorb ETA variance
+
+Objectives:
+- Primary: Maximize expected net value = revenues - costs - penalties
+- Revenues: Term cargoes ($80M each, 75k m³), Spot cargoes ($85-95M, 70k m³, price uncertain)
+- Costs: Demurrage ($50k/day if loading delayed), boil-off ($200k/day tank holding)
+- Penalties: Off-spec HHV ($2M penalty if outside 1055-1095 BTU/scf), tank-top risk ($5M if >95% full)
+
+Uncertainties:
+1. Product quality (HHV): Distributions per train with ±10 BTU/scf variance, evolving as Field ...
+INFO:root:--------------------------------------------------------------------------------
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:LLM RESPONSE:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:===DOMAIN===
+(define (domain lng-offtake-optimization)
+  (:requirements :strips :typing :negation :equality :conditional-effects :adl)
+  (:types
+    train
+    tank
+    vessel
+    cargo
+    berth
+  )
+  
+  (:predicates
+    (train1-blend-ratio)
+    (train2-blend-ratio)
+    (train1-production-rate)
+    (train2-production-rate)
+    (train1-hhv)
+    (train2-hhv)
+    (field2-ramp-up)
+    (field1-ramp-down)
+    (tank-a-capacity)
+    (tank-b-capacity)
+    (tank-c-capacity)
+    (tank-connectivity)
+    (tank-withdrawal)
+    (tank-top-risk)
+    (operational-buffer)
+    (boil-off-cost)
+    (berth-capacity)
+    (berth-turnaround)
+    (loading-rate)
+    (tidal-windows)
+    (demurrage-cost)
+    (term-contracts)
+    (term-laycan-windows)
+    (term-laycan-compliance)
+    (spot-opportunities)
+    (spot-prices)
+    (spot-acceptance-probability)
+    (spot-decision)
+    (hhv-specification)
+    (hhv-compliance-probability)
+    (hhv-penalty)
+    (cargo-hhv)
+    (tank-hhv-evolution)
+    (planning-horizon)
+    (time-discretization)
+    (vessel-eta-uncertainty)
+    (uncertainty1)
+    (uncertainty2)
+    (uncertainty3)
+    (uncertainty4)
+    (uncertainty5)
+    (uncertainty6)
+  )
+
+  (:action enforce-train1-blend-ratio
+    :precondition (not (train1-blend-ratio))
+    :effect (train1-blend-ratio)
+  )
+
+  (:action enforce-train2-blend-ratio
+    :precondition (not (train2-blend-ratio))
+    :effect (train2-blend-ratio)
+  )
+
+  (:action enforce-train1-production-rate
+    :precondition (not (train1-production-rate))
+    :effect (train1-production-rate)
+  )
+
+  (:action enforce-train2-production-rate
+    :precondition (not (train2-production-rate))
+    :effect (train2-production-rate)
+  )
+
+  (:action enforce-train1-hhv
+    :precondition (not (train1-hhv))
+    :effect (train1-hhv)
+  )
+
+  (:action enforce-train2-hhv
+    :precondition (not (train2-hhv))
+    :effect (train2-hhv)
+  )
+
+  (:action enforce-field2-ramp-up
+    :precondition (not (field2-ramp-up))
+    :effect (field2-ramp-up)
+  )
+
+  (:action enforce-...
+INFO:root:================================================================================
+INFO:root:Registered tank_a_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_b_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_c_level: range=[0.0, 160000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=159000.00
+INFO:lng_semantics:Initialized LNG semantic NeuroSym graph.
+INFO:RobustnessPipeline:LNG semantic layer enabled (NeuroSym graph initialized).
+INFO:RobustnessPipeline:RobustnessPipeline initialized with Industrial-Grade upgrades.
+INFO:root:Applied safety buffers to discretized variables
+INFO:root:Translated MiniZinc → PPDDL via LLM (with structured constraints)
+INFO:root:Registered tank_a_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_b_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_c_level: range=[0.0, 160000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=159000.00
+INFO:lng_semantics:Initialized LNG semantic NeuroSym graph.
+INFO:RobustnessPipeline:LNG semantic layer enabled (NeuroSym graph initialized).
+INFO:RobustnessPipeline:RobustnessPipeline initialized with Industrial-Grade upgrades.
+INFO:RobustnessPipeline:ROBUSTNESS FIX #1 & #3: PPDDL Model & Physics Checking
+INFO:root:✓ Model checking: All MiniZinc invariants properly enforced
+INFO:RobustnessPipeline:ROBUSTNESS FIX #1 & #3: PPDDL Model & Physics Checking
+INFO:RobustnessPipeline:ROBUSTNESS FIX #5: FF-REPLAN-Approximation: Plan found via determinization.
+INFO:root:Plan comparison (iter 3 vs 4): similarity=1.000, length_diff=0
+INFO:root:  ✗ No plan found
+INFO:root:
+--- Iteration 5/10 ---
+INFO:RobustnessPipeline:Kalman (Train 1): μ=1088.4, trend=0.893 (damped)
+INFO:RobustnessPipeline:Kalman (Train 2): μ=1056.2, trend=-0.770 (damped)
+INFO:root:  Train 1 HHV: 1088.4 ± 4.3 BTU/scf (true=1088.0, error=0.4, trend=0.893 BTU/scf per obs)
+INFO:root:  Train 2 HHV: 1056.2 ± 4.3 BTU/scf (true=1062.0, error=5.8, trend=-0.770 BTU/scf per obs)
+INFO:root:  Spot Market: Price=$93.7M, Available=True
+INFO:root:Extracted MiniZinc constraints (structured, formal)
+INFO:root:MiniZinc preview: % Problem: lng_offtake
+% Description: LNG Offtake Optimization Problem
+
+Goal: Maximize value realization over a rolling 30-day horizon by meeting term contract obligations and exploiting probabilistic spot cargo opportunities, while explicitly representing uncertainty in product quality (HHV), vessel arrival times, and spot prices.
+
+Physical Context:
+- Two LNG trains operate in parallel with fixed upstream feed blends:
+  * Train 2 (ConocoPhillips Cascade): 100% Field 2, leaner gas (HHV: 1048-106...
+INFO:root:================================================================================
+INFO:root:LLM PROMPT:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:
+You are translating structured MiniZinc constraints to PPDDL.
+
+The problem is: LNG Offtake Optimization Problem
+
+Goal: Maximize value realization over a rolling 30-day horizon by meeting term contract obligations and exploiting probabilistic spot cargo opportunities, while explicitly representing uncertainty in product quality (HHV), vessel arrival times, and spot prices.
+
+Physical Context:
+- Two LNG trains operate in parallel with fixed upstream feed blends:
+  * Train 2 (ConocoPhillips Cascade): 100% Field 2, leaner gas (HHV: 1048-1065 BTU/scf, mean=1056, uncertainty ±4)
+  * Train 1 (Shell Mixed Refrigerant): 41-59% Field 1:Field 2 ratio (HHV: 1080-1097 BTU/scf, mean=1088, uncertainty ±4)
+- Field 2 is ramping up (production increasing 5% per week) while Field 1 ramps down
+- Production rates: Train 1: 4.5 MTPA, Train 2: 5.0 MTPA (maximized subject to maintenance)
+- Storage: 3 tanks (Tank A: 180k m³, Tank B: 180k m³, Tank C: 160k m³)
+- Tank connectivity: Train 1 → Tank A, B; Train 2 → Tank B, C; All tanks → Berth
+- Berth: Single berth with 24hr turnaround time between vessels
+
+Decisions:
+1. Cargo timing: load start/end within laycan windows (term contracts have ±2 day flexibility)
+2. Vessel sequencing and berth assignment (no overlap, 24hr clearance)
+3. Tank withdrawals per cargo (which tanks feed which cargo, respecting connectivity)
+4. Spot cargo acceptance: binary decision per opportunity (5 spot opportunities over horizon)
+5. Operational buffers: maintain 20% tank headroom to absorb ETA variance
+
+Objectives:
+- Primary: Maximize expected net value = revenues - costs - penalties
+- Revenues: Term cargoes ($80M each, 75k m³), Spot cargoes ($85-95M, 70k m³, price uncertain)
+- Costs: Demurrage ($50k/day if loading delayed), boil-off ($200k/day tank holding)
+- Penalties: Off-spec HHV ($2M penalty if outside 1055-1095 BTU/scf), tank-top risk ($5M if >95% full)
+
+Uncertainties:
+1. Product quality (HHV): Distributions per train with ±10 BTU/scf variance, evolving as Field ...
+INFO:root:--------------------------------------------------------------------------------
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:LLM RESPONSE:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:===DOMAIN===
+(define (domain lng-oftake-optimization)
+  (:requirements :strips :typing :negation :equality :conditional-effects :adl)
+  (:types 
+    train 
+    tank 
+    vessel 
+    cargo 
+    berth 
+    time 
+    quality 
+    spot 
+  )
+  
+  (:predicates 
+    (train1-blend-ratio) 
+    (train2-blend-ratio) 
+    (train1-production-rate) 
+    (train2-production-rate) 
+    (train1-hhv) 
+    (train2-hhv) 
+    (field2-ramp-up) 
+    (field1-ramp-down) 
+    (tank-a-capacity) 
+    (tank-b-capacity) 
+    (tank-c-capacity) 
+    (tank-connectivity) 
+    (tank-withdrawal) 
+    (tank-top-risk) 
+    (operational-buffer) 
+    (boil-off-cost) 
+    (berth-capacity) 
+    (berth-turnaround) 
+    (loading-rate) 
+    (tidal-windows) 
+    (demurrage-cost) 
+    (term-contracts) 
+    (term-laycan-windows) 
+    (term-laycan-compliance) 
+    (spot-opportunities) 
+    (spot-prices) 
+    (spot-acceptance-probability) 
+    (spot-decision) 
+    (hhv-specification) 
+    (hhv-compliance-probability) 
+    (hhv-penalty) 
+    (cargo-hhv) 
+    (tank-hhv-evolution) 
+    (planning-horizon) 
+    (time-discretization) 
+    (vessel-eta-uncertainty) 
+    (uncertainty1) 
+    (uncertainty2) 
+    (uncertainty3) 
+    (uncertainty4) 
+    (uncertainty5) 
+    (uncertainty6) 
+  )
+
+  (:action optimize-loading-plan
+    :parameters (?t - train ?tk - tank ?v - vessel ?c - cargo ?b - berth)
+    :precondition (and 
+      (train1-blend-ratio) 
+      (train2-blend-ratio) 
+      (train1-production-rate) 
+      (train2-production-rate) 
+      (train1-hhv) 
+      (train2-hhv) 
+      (field2-ramp-up) 
+      (field1-ramp-down) 
+      (tank-a-capacity) 
+      (tank-b-capacity) 
+      (tank-c-capacity) 
+      (tank-connectivity) 
+      (tank-withdrawal) 
+      (tank-top-risk) 
+      (operational-buffer) 
+      (boil-off-cost) 
+      (berth-capacity) 
+      (berth-turnaround) 
+      (loading-rate) 
+      (tidal-windows) 
+      (demurrage-cost) 
+      (term-contracts) 
+      (term-laycan-windows) 
+      (term-laycan-compliance) 
+   ...
+INFO:root:================================================================================
+INFO:root:Registered tank_a_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_b_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_c_level: range=[0.0, 160000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=159000.00
+INFO:lng_semantics:Initialized LNG semantic NeuroSym graph.
+INFO:RobustnessPipeline:LNG semantic layer enabled (NeuroSym graph initialized).
+INFO:RobustnessPipeline:RobustnessPipeline initialized with Industrial-Grade upgrades.
+INFO:root:Applied safety buffers to discretized variables
+INFO:root:Translated MiniZinc → PPDDL via LLM (with structured constraints)
+INFO:root:Registered tank_a_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_b_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_c_level: range=[0.0, 160000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=159000.00
+INFO:lng_semantics:Initialized LNG semantic NeuroSym graph.
+INFO:RobustnessPipeline:LNG semantic layer enabled (NeuroSym graph initialized).
+INFO:RobustnessPipeline:RobustnessPipeline initialized with Industrial-Grade upgrades.
+INFO:RobustnessPipeline:ROBUSTNESS FIX #1 & #3: PPDDL Model & Physics Checking
+INFO:root:✓ Model checking: All MiniZinc invariants properly enforced
+INFO:RobustnessPipeline:ROBUSTNESS FIX #1 & #3: PPDDL Model & Physics Checking
+INFO:RobustnessPipeline:ROBUSTNESS FIX #5: FF-REPLAN-Approximation: Plan found via determinization.
+INFO:root:Plan comparison (iter 4 vs 5): similarity=1.000, length_diff=0
+INFO:root:  ✗ No plan found
+INFO:root:
+--- Iteration 6/10 ---
+INFO:RobustnessPipeline:Kalman (Train 1): μ=1082.1, trend=-0.909 (damped)
+INFO:RobustnessPipeline:Kalman (Train 2): μ=1060.6, trend=0.614 (damped)
+INFO:root:  Train 1 HHV: 1082.1 ± 4.3 BTU/scf (true=1088.0, error=5.9, trend=-0.909 BTU/scf per obs)
+INFO:root:  Train 2 HHV: 1060.6 ± 4.3 BTU/scf (true=1062.0, error=1.4, trend=0.614 BTU/scf per obs)
+INFO:root:  Spot Market: Price=$87.3M, Available=False
+INFO:root:Extracted MiniZinc constraints (structured, formal)
+INFO:root:MiniZinc preview: % Problem: lng_offtake
+% Description: LNG Offtake Optimization Problem
+
+Goal: Maximize value realization over a rolling 30-day horizon by meeting term contract obligations and exploiting probabilistic spot cargo opportunities, while explicitly representing uncertainty in product quality (HHV), vessel arrival times, and spot prices.
+
+Physical Context:
+- Two LNG trains operate in parallel with fixed upstream feed blends:
+  * Train 2 (ConocoPhillips Cascade): 100% Field 2, leaner gas (HHV: 1052-106...
+INFO:root:================================================================================
+INFO:root:LLM PROMPT:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:
+You are translating structured MiniZinc constraints to PPDDL.
+
+The problem is: LNG Offtake Optimization Problem
+
+Goal: Maximize value realization over a rolling 30-day horizon by meeting term contract obligations and exploiting probabilistic spot cargo opportunities, while explicitly representing uncertainty in product quality (HHV), vessel arrival times, and spot prices.
+
+Physical Context:
+- Two LNG trains operate in parallel with fixed upstream feed blends:
+  * Train 2 (ConocoPhillips Cascade): 100% Field 2, leaner gas (HHV: 1052-1069 BTU/scf, mean=1061, uncertainty ±4)
+  * Train 1 (Shell Mixed Refrigerant): 41-59% Field 1:Field 2 ratio (HHV: 1074-1091 BTU/scf, mean=1082, uncertainty ±4)
+- Field 2 is ramping up (production increasing 5% per week) while Field 1 ramps down
+- Production rates: Train 1: 4.5 MTPA, Train 2: 5.0 MTPA (maximized subject to maintenance)
+- Storage: 3 tanks (Tank A: 180k m³, Tank B: 180k m³, Tank C: 160k m³)
+- Tank connectivity: Train 1 → Tank A, B; Train 2 → Tank B, C; All tanks → Berth
+- Berth: Single berth with 24hr turnaround time between vessels
+
+Decisions:
+1. Cargo timing: load start/end within laycan windows (term contracts have ±2 day flexibility)
+2. Vessel sequencing and berth assignment (no overlap, 24hr clearance)
+3. Tank withdrawals per cargo (which tanks feed which cargo, respecting connectivity)
+4. Spot cargo acceptance: binary decision per opportunity (5 spot opportunities over horizon)
+5. Operational buffers: maintain 20% tank headroom to absorb ETA variance
+
+Objectives:
+- Primary: Maximize expected net value = revenues - costs - penalties
+- Revenues: Term cargoes ($80M each, 75k m³), Spot cargoes ($85-95M, 70k m³, price uncertain)
+- Costs: Demurrage ($50k/day if loading delayed), boil-off ($200k/day tank holding)
+- Penalties: Off-spec HHV ($2M penalty if outside 1055-1095 BTU/scf), tank-top risk ($5M if >95% full)
+
+Uncertainties:
+1. Product quality (HHV): Distributions per train with ±10 BTU/scf variance, evolving as Field ...
+INFO:root:--------------------------------------------------------------------------------
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:LLM RESPONSE:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:===DOMAIN===
+(define (domain lng-offtake-optimization)
+  (:requirements :strips :typing :negation :equality :conditional-effects :adl)
+  (:types 
+    train 
+    tank 
+    vessel 
+    cargo 
+    berth 
+    time 
+    quality 
+  )
+  
+  (:predicates 
+    (train1-blend-ratio) 
+    (train2-blend-ratio) 
+    (train1-production-rate) 
+    (train2-production-rate) 
+    (train1-hhv) 
+    (train2-hhv) 
+    (field2-ramp-up) 
+    (field1-ramp-down) 
+    (tank-a-capacity) 
+    (tank-b-capacity) 
+    (tank-c-capacity) 
+    (tank-connectivity) 
+    (tank-withdrawal) 
+    (tank-top-risk) 
+    (operational-buffer) 
+    (boil-off-cost) 
+    (berth-capacity) 
+    (berth-turnaround) 
+    (loading-rate) 
+    (tidal-windows) 
+    (demurrage-cost) 
+    (term-contracts) 
+    (term-laycan-windows) 
+    (term-laycan-compliance) 
+    (spot-opportunities) 
+    (spot-prices) 
+    (spot-acceptance-probability) 
+    (spot-decision) 
+    (hhv-specification) 
+    (hhv-compliance-probability) 
+    (hhv-penalty) 
+    (cargo-hhv) 
+    (tank-hhv-evolution) 
+    (planning-horizon) 
+    (time-discretization) 
+    (vessel-eta-uncertainty) 
+    (uncertainty1) 
+    (uncertainty2) 
+    (uncertainty3) 
+    (uncertainty4) 
+    (uncertainty5) 
+    (uncertainty6) 
+  )
+
+  (:action enforce-train1-blend-ratio
+    :precondition (not (train1-blend-ratio))
+    :effect (train1-blend-ratio)
+  )
+
+  (:action enforce-train2-blend-ratio
+    :precondition (not (train2-blend-ratio))
+    :effect (train2-blend-ratio)
+  )
+
+  (:action enforce-train1-production-rate
+    :precondition (not (train1-production-rate))
+    :effect (train1-production-rate)
+  )
+
+  (:action enforce-train2-production-rate
+    :precondition (not (train2-production-rate))
+    :effect (train2-production-rate)
+  )
+
+  (:action enforce-train1-hhv
+    :precondition (not (train1-hhv))
+    :effect (train1-hhv)
+  )
+
+  (:action enforce-train2-hhv
+    :precondition (not (train2-hhv))
+    :effect (train2-hhv)
+  )
+
+  (:action enforce-field2-ramp-up
+    :precondition (not...
+INFO:root:================================================================================
+INFO:root:Registered tank_a_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_b_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_c_level: range=[0.0, 160000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=159000.00
+INFO:lng_semantics:Initialized LNG semantic NeuroSym graph.
+INFO:RobustnessPipeline:LNG semantic layer enabled (NeuroSym graph initialized).
+INFO:RobustnessPipeline:RobustnessPipeline initialized with Industrial-Grade upgrades.
+INFO:root:Applied safety buffers to discretized variables
+INFO:root:Translated MiniZinc → PPDDL via LLM (with structured constraints)
+INFO:root:Registered tank_a_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_b_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_c_level: range=[0.0, 160000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=159000.00
+INFO:lng_semantics:Initialized LNG semantic NeuroSym graph.
+INFO:RobustnessPipeline:LNG semantic layer enabled (NeuroSym graph initialized).
+INFO:RobustnessPipeline:RobustnessPipeline initialized with Industrial-Grade upgrades.
+INFO:RobustnessPipeline:ROBUSTNESS FIX #1 & #3: PPDDL Model & Physics Checking
+INFO:root:✓ Model checking: All MiniZinc invariants properly enforced
+INFO:RobustnessPipeline:ROBUSTNESS FIX #1 & #3: PPDDL Model & Physics Checking
+INFO:RobustnessPipeline:ROBUSTNESS FIX #5: FF-REPLAN-Approximation: Plan found via determinization.
+INFO:root:Plan comparison (iter 5 vs 6): similarity=1.000, length_diff=0
+INFO:root:  ✗ No plan found
+INFO:root:
+--- Iteration 7/10 ---
+INFO:RobustnessPipeline:Kalman (Train 1): μ=1091.1, trend=0.695 (damped)
+INFO:RobustnessPipeline:Kalman (Train 2): μ=1052.0, trend=-1.110 (damped)
+INFO:root:  Train 1 HHV: 1091.1 ± 4.3 BTU/scf (true=1088.0, error=3.1, trend=0.695 BTU/scf per obs)
+INFO:root:  Train 2 HHV: 1052.0 ± 4.3 BTU/scf (true=1062.0, error=10.0, trend=-1.110 BTU/scf per obs)
+INFO:root:  Spot Market: Price=$91.2M, Available=True
+INFO:root:Extracted MiniZinc constraints (structured, formal)
+INFO:root:MiniZinc preview: % Problem: lng_offtake
+% Description: LNG Offtake Optimization Problem
+
+Goal: Maximize value realization over a rolling 30-day horizon by meeting term contract obligations and exploiting probabilistic spot cargo opportunities, while explicitly representing uncertainty in product quality (HHV), vessel arrival times, and spot prices.
+
+Physical Context:
+- Two LNG trains operate in parallel with fixed upstream feed blends:
+  * Train 2 (ConocoPhillips Cascade): 100% Field 2, leaner gas (HHV: 1043-106...
+INFO:root:================================================================================
+INFO:root:LLM PROMPT:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:
+You are translating structured MiniZinc constraints to PPDDL.
+
+The problem is: LNG Offtake Optimization Problem
+
+Goal: Maximize value realization over a rolling 30-day horizon by meeting term contract obligations and exploiting probabilistic spot cargo opportunities, while explicitly representing uncertainty in product quality (HHV), vessel arrival times, and spot prices.
+
+Physical Context:
+- Two LNG trains operate in parallel with fixed upstream feed blends:
+  * Train 2 (ConocoPhillips Cascade): 100% Field 2, leaner gas (HHV: 1043-1061 BTU/scf, mean=1052, uncertainty ±4)
+  * Train 1 (Shell Mixed Refrigerant): 41-59% Field 1:Field 2 ratio (HHV: 1083-1100 BTU/scf, mean=1091, uncertainty ±4)
+- Field 2 is ramping up (production increasing 5% per week) while Field 1 ramps down
+- Production rates: Train 1: 4.5 MTPA, Train 2: 5.0 MTPA (maximized subject to maintenance)
+- Storage: 3 tanks (Tank A: 180k m³, Tank B: 180k m³, Tank C: 160k m³)
+- Tank connectivity: Train 1 → Tank A, B; Train 2 → Tank B, C; All tanks → Berth
+- Berth: Single berth with 24hr turnaround time between vessels
+
+Decisions:
+1. Cargo timing: load start/end within laycan windows (term contracts have ±2 day flexibility)
+2. Vessel sequencing and berth assignment (no overlap, 24hr clearance)
+3. Tank withdrawals per cargo (which tanks feed which cargo, respecting connectivity)
+4. Spot cargo acceptance: binary decision per opportunity (5 spot opportunities over horizon)
+5. Operational buffers: maintain 20% tank headroom to absorb ETA variance
+
+Objectives:
+- Primary: Maximize expected net value = revenues - costs - penalties
+- Revenues: Term cargoes ($80M each, 75k m³), Spot cargoes ($85-95M, 70k m³, price uncertain)
+- Costs: Demurrage ($50k/day if loading delayed), boil-off ($200k/day tank holding)
+- Penalties: Off-spec HHV ($2M penalty if outside 1055-1095 BTU/scf), tank-top risk ($5M if >95% full)
+
+Uncertainties:
+1. Product quality (HHV): Distributions per train with ±10 BTU/scf variance, evolving as Field ...
+INFO:root:--------------------------------------------------------------------------------
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:LLM RESPONSE:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:===DOMAIN===
+(define (domain lng-offtake-optimization)
+  (:requirements :strips :typing :negation :equality :conditional-effects :adl)
+  (:types 
+    train 
+    tank 
+    vessel 
+    cargo 
+    berth 
+    time 
+    hhv 
+  )
+  (:predicates 
+    (train1-blend-ratio) 
+    (train2-blend-ratio) 
+    (train1-production-rate) 
+    (train2-production-rate) 
+    (train1-hhv) 
+    (train2-hhv) 
+    (field2-ramp-up) 
+    (field1-ramp-down) 
+    (tank-a-capacity) 
+    (tank-b-capacity) 
+    (tank-c-capacity) 
+    (tank-connectivity) 
+    (tank-withdrawal) 
+    (tank-top-risk) 
+    (operational-buffer) 
+    (boil-off-cost) 
+    (berth-capacity) 
+    (berth-turnaround) 
+    (loading-rate) 
+    (tidal-windows) 
+    (demurrage-cost) 
+    (term-contracts) 
+    (term-laycan-windows) 
+    (term-laycan-compliance) 
+    (spot-opportunities) 
+    (spot-prices) 
+    (spot-acceptance-probability) 
+    (spot-decision) 
+    (hhv-specification) 
+    (hhv-compliance-probability) 
+    (hhv-penalty) 
+    (cargo-hhv) 
+    (tank-hhv-evolution) 
+    (planning-horizon) 
+    (time-discretization) 
+    (vessel-eta-uncertainty) 
+    (uncertainty1) 
+    (uncertainty2) 
+    (uncertainty3) 
+    (uncertainty4) 
+    (uncertainty5) 
+    (uncertainty6) 
+    (objectives)
+  )
+  (:action enforce-train1-blend-ratio
+    :precondition (and)
+    :effect (train1-blend-ratio)
+  )
+  (:action enforce-train2-blend-ratio
+    :precondition (and)
+    :effect (train2-blend-ratio)
+  )
+  (:action enforce-train1-production-rate
+    :precondition (and)
+    :effect (train1-production-rate)
+  )
+  (:action enforce-train2-production-rate
+    :precondition (and)
+    :effect (train2-production-rate)
+  )
+  (:action enforce-train1-hhv
+    :precondition (and)
+    :effect (train1-hhv)
+  )
+  (:action enforce-train2-hhv
+    :precondition (and)
+    :effect (train2-hhv)
+  )
+  (:action enforce-field2-ramp-up
+    :precondition (and)
+    :effect (field2-ramp-up)
+  )
+  (:action enforce-field1-ramp-down
+    :precondition (and)
+    :effect (field1-...
+INFO:root:================================================================================
+INFO:root:Registered tank_a_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_b_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_c_level: range=[0.0, 160000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=159000.00
+INFO:lng_semantics:Initialized LNG semantic NeuroSym graph.
+INFO:RobustnessPipeline:LNG semantic layer enabled (NeuroSym graph initialized).
+INFO:RobustnessPipeline:RobustnessPipeline initialized with Industrial-Grade upgrades.
+INFO:root:Applied safety buffers to discretized variables
+INFO:root:Translated MiniZinc → PPDDL via LLM (with structured constraints)
+INFO:root:Registered tank_a_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_b_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_c_level: range=[0.0, 160000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=159000.00
+INFO:lng_semantics:Initialized LNG semantic NeuroSym graph.
+INFO:RobustnessPipeline:LNG semantic layer enabled (NeuroSym graph initialized).
+INFO:RobustnessPipeline:RobustnessPipeline initialized with Industrial-Grade upgrades.
+INFO:RobustnessPipeline:ROBUSTNESS FIX #1 & #3: PPDDL Model & Physics Checking
+INFO:root:✓ Model checking: All MiniZinc invariants properly enforced
+INFO:RobustnessPipeline:ROBUSTNESS FIX #1 & #3: PPDDL Model & Physics Checking
+INFO:RobustnessPipeline:ROBUSTNESS FIX #5: FF-REPLAN-Approximation: Plan found via determinization.
+INFO:root:Plan comparison (iter 6 vs 7): similarity=1.000, length_diff=0
+INFO:root:  ✗ No plan found
+INFO:root:
+--- Iteration 8/10 ---
+INFO:RobustnessPipeline:Kalman (Train 1): μ=1089.6, trend=0.679 (damped)
+INFO:RobustnessPipeline:Kalman (Train 2): μ=1066.1, trend=1.332 (damped)
+INFO:root:  Train 1 HHV: 1089.6 ± 4.3 BTU/scf (true=1088.0, error=1.6, trend=0.679 BTU/scf per obs)
+INFO:root:  Train 2 HHV: 1066.1 ± 4.3 BTU/scf (true=1062.0, error=4.1, trend=1.332 BTU/scf per obs)
+INFO:root:  Spot Market: Price=$84.6M, Available=True
+INFO:root:Extracted MiniZinc constraints (structured, formal)
+INFO:root:MiniZinc preview: % Problem: lng_offtake
+% Description: LNG Offtake Optimization Problem
+
+Goal: Maximize value realization over a rolling 30-day horizon by meeting term contract obligations and exploiting probabilistic spot cargo opportunities, while explicitly representing uncertainty in product quality (HHV), vessel arrival times, and spot prices.
+
+Physical Context:
+- Two LNG trains operate in parallel with fixed upstream feed blends:
+  * Train 2 (ConocoPhillips Cascade): 100% Field 2, leaner gas (HHV: 1058-107...
+INFO:root:================================================================================
+INFO:root:LLM PROMPT:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:
+You are translating structured MiniZinc constraints to PPDDL.
+
+The problem is: LNG Offtake Optimization Problem
+
+Goal: Maximize value realization over a rolling 30-day horizon by meeting term contract obligations and exploiting probabilistic spot cargo opportunities, while explicitly representing uncertainty in product quality (HHV), vessel arrival times, and spot prices.
+
+Physical Context:
+- Two LNG trains operate in parallel with fixed upstream feed blends:
+  * Train 2 (ConocoPhillips Cascade): 100% Field 2, leaner gas (HHV: 1058-1075 BTU/scf, mean=1066, uncertainty ±4)
+  * Train 1 (Shell Mixed Refrigerant): 41-59% Field 1:Field 2 ratio (HHV: 1081-1098 BTU/scf, mean=1090, uncertainty ±4)
+- Field 2 is ramping up (production increasing 5% per week) while Field 1 ramps down
+- Production rates: Train 1: 4.5 MTPA, Train 2: 5.0 MTPA (maximized subject to maintenance)
+- Storage: 3 tanks (Tank A: 180k m³, Tank B: 180k m³, Tank C: 160k m³)
+- Tank connectivity: Train 1 → Tank A, B; Train 2 → Tank B, C; All tanks → Berth
+- Berth: Single berth with 24hr turnaround time between vessels
+
+Decisions:
+1. Cargo timing: load start/end within laycan windows (term contracts have ±2 day flexibility)
+2. Vessel sequencing and berth assignment (no overlap, 24hr clearance)
+3. Tank withdrawals per cargo (which tanks feed which cargo, respecting connectivity)
+4. Spot cargo acceptance: binary decision per opportunity (5 spot opportunities over horizon)
+5. Operational buffers: maintain 20% tank headroom to absorb ETA variance
+
+Objectives:
+- Primary: Maximize expected net value = revenues - costs - penalties
+- Revenues: Term cargoes ($80M each, 75k m³), Spot cargoes ($85-95M, 70k m³, price uncertain)
+- Costs: Demurrage ($50k/day if loading delayed), boil-off ($200k/day tank holding)
+- Penalties: Off-spec HHV ($2M penalty if outside 1055-1095 BTU/scf), tank-top risk ($5M if >95% full)
+
+Uncertainties:
+1. Product quality (HHV): Distributions per train with ±10 BTU/scf variance, evolving as Field ...
+INFO:root:--------------------------------------------------------------------------------
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:LLM RESPONSE:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:===DOMAIN===
+(define (domain lng-offtake-optimization)
+  (:requirements :strips :typing :negation :equality :conditional-effects :adl)
+  (:types 
+    train 
+    tank 
+    vessel 
+    cargo 
+    berth 
+    time 
+    quality 
+    opportunity 
+  )
+  
+  (:predicates 
+    (train1-blend-ratio) 
+    (train2-blend-ratio) 
+    (train1-production-rate) 
+    (train2-production-rate) 
+    (train1-hhv) 
+    (train2-hhv) 
+    (field2-ramp-up) 
+    (field1-ramp-down) 
+    (tank-a-capacity) 
+    (tank-b-capacity) 
+    (tank-c-capacity) 
+    (tank-connectivity) 
+    (tank-withdrawal) 
+    (tank-top-risk) 
+    (operational-buffer) 
+    (boil-off-cost) 
+    (berth-capacity) 
+    (berth-turnaround) 
+    (loading-rate) 
+    (tidal-windows) 
+    (demurrage-cost) 
+    (term-contracts) 
+    (term-laycan-windows) 
+    (term-laycan-compliance) 
+    (spot-opportunities) 
+    (spot-prices) 
+    (spot-acceptance-probability) 
+    (spot-decision) 
+    (hhv-specification) 
+    (hhv-compliance-probability) 
+    (hhv-penalty) 
+    (cargo-hhv) 
+    (tank-hhv-evolution) 
+    (planning-horizon) 
+    (time-discretization) 
+    (vessel-eta-uncertainty) 
+    (uncertainty1) 
+    (uncertainty2) 
+    (uncertainty3) 
+    (uncertainty4) 
+    (uncertainty5) 
+    (uncertainty6) 
+  )
+  
+  (:action enforce-train1-blend-ratio
+    :precondition (not (train1-blend-ratio))
+    :effect (train1-blend-ratio)
+  )
+  
+  (:action enforce-train2-blend-ratio
+    :precondition (not (train2-blend-ratio))
+    :effect (train2-blend-ratio)
+  )
+  
+  (:action enforce-train1-production-rate
+    :precondition (not (train1-production-rate))
+    :effect (train1-production-rate)
+  )
+  
+  (:action enforce-train2-production-rate
+    :precondition (not (train2-production-rate))
+    :effect (train2-production-rate)
+  )
+  
+  (:action enforce-train1-hhv
+    :precondition (not (train1-hhv))
+    :effect (train1-hhv)
+  )
+  
+  (:action enforce-train2-hhv
+    :precondition (not (train2-hhv))
+    :effect (train2-hhv)
+  )
+  
+  (:action enforce-field2...
+INFO:root:================================================================================
+INFO:root:Registered tank_a_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_b_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_c_level: range=[0.0, 160000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=159000.00
+INFO:lng_semantics:Initialized LNG semantic NeuroSym graph.
+INFO:RobustnessPipeline:LNG semantic layer enabled (NeuroSym graph initialized).
+INFO:RobustnessPipeline:RobustnessPipeline initialized with Industrial-Grade upgrades.
+INFO:root:Applied safety buffers to discretized variables
+INFO:root:Translated MiniZinc → PPDDL via LLM (with structured constraints)
+INFO:root:Registered tank_a_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_b_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_c_level: range=[0.0, 160000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=159000.00
+INFO:lng_semantics:Initialized LNG semantic NeuroSym graph.
+INFO:RobustnessPipeline:LNG semantic layer enabled (NeuroSym graph initialized).
+INFO:RobustnessPipeline:RobustnessPipeline initialized with Industrial-Grade upgrades.
+INFO:RobustnessPipeline:ROBUSTNESS FIX #1 & #3: PPDDL Model & Physics Checking
+INFO:root:✓ Model checking: All MiniZinc invariants properly enforced
+INFO:RobustnessPipeline:ROBUSTNESS FIX #1 & #3: PPDDL Model & Physics Checking
+INFO:RobustnessPipeline:ROBUSTNESS FIX #5: FF-REPLAN-Approximation: Plan found via determinization.
+INFO:root:Plan comparison (iter 7 vs 8): similarity=1.000, length_diff=0
+INFO:root:  ✗ No plan found
+INFO:root:
+--- Iteration 9/10 ---
+INFO:RobustnessPipeline:Kalman (Train 1): μ=1081.5, trend=-0.706 (damped)
+INFO:RobustnessPipeline:Kalman (Train 2): μ=1057.9, trend=0.072 (damped)
+INFO:root:  Train 1 HHV: 1081.5 ± 4.3 BTU/scf (true=1088.0, error=6.5, trend=-0.706 BTU/scf per obs)
+INFO:root:  Train 2 HHV: 1057.9 ± 4.3 BTU/scf (true=1062.0, error=4.1, trend=0.072 BTU/scf per obs)
+INFO:root:  Spot Market: Price=$84.1M, Available=True
+INFO:root:Extracted MiniZinc constraints (structured, formal)
+INFO:root:MiniZinc preview: % Problem: lng_offtake
+% Description: LNG Offtake Optimization Problem
+
+Goal: Maximize value realization over a rolling 30-day horizon by meeting term contract obligations and exploiting probabilistic spot cargo opportunities, while explicitly representing uncertainty in product quality (HHV), vessel arrival times, and spot prices.
+
+Physical Context:
+- Two LNG trains operate in parallel with fixed upstream feed blends:
+  * Train 2 (ConocoPhillips Cascade): 100% Field 2, leaner gas (HHV: 1049-106...
+INFO:root:================================================================================
+INFO:root:LLM PROMPT:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:
+You are translating structured MiniZinc constraints to PPDDL.
+
+The problem is: LNG Offtake Optimization Problem
+
+Goal: Maximize value realization over a rolling 30-day horizon by meeting term contract obligations and exploiting probabilistic spot cargo opportunities, while explicitly representing uncertainty in product quality (HHV), vessel arrival times, and spot prices.
+
+Physical Context:
+- Two LNG trains operate in parallel with fixed upstream feed blends:
+  * Train 2 (ConocoPhillips Cascade): 100% Field 2, leaner gas (HHV: 1049-1066 BTU/scf, mean=1058, uncertainty ±4)
+  * Train 1 (Shell Mixed Refrigerant): 41-59% Field 1:Field 2 ratio (HHV: 1073-1090 BTU/scf, mean=1081, uncertainty ±4)
+- Field 2 is ramping up (production increasing 5% per week) while Field 1 ramps down
+- Production rates: Train 1: 4.5 MTPA, Train 2: 5.0 MTPA (maximized subject to maintenance)
+- Storage: 3 tanks (Tank A: 180k m³, Tank B: 180k m³, Tank C: 160k m³)
+- Tank connectivity: Train 1 → Tank A, B; Train 2 → Tank B, C; All tanks → Berth
+- Berth: Single berth with 24hr turnaround time between vessels
+
+Decisions:
+1. Cargo timing: load start/end within laycan windows (term contracts have ±2 day flexibility)
+2. Vessel sequencing and berth assignment (no overlap, 24hr clearance)
+3. Tank withdrawals per cargo (which tanks feed which cargo, respecting connectivity)
+4. Spot cargo acceptance: binary decision per opportunity (5 spot opportunities over horizon)
+5. Operational buffers: maintain 20% tank headroom to absorb ETA variance
+
+Objectives:
+- Primary: Maximize expected net value = revenues - costs - penalties
+- Revenues: Term cargoes ($80M each, 75k m³), Spot cargoes ($85-95M, 70k m³, price uncertain)
+- Costs: Demurrage ($50k/day if loading delayed), boil-off ($200k/day tank holding)
+- Penalties: Off-spec HHV ($2M penalty if outside 1055-1095 BTU/scf), tank-top risk ($5M if >95% full)
+
+Uncertainties:
+1. Product quality (HHV): Distributions per train with ±10 BTU/scf variance, evolving as Field ...
+INFO:root:--------------------------------------------------------------------------------
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:LLM RESPONSE:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:===DOMAIN===
+(define (domain lng_offtake_optimization)
+  (:requirements :strips :typing :negation :equality :conditional-effects :adl)
+  (:types
+    train
+    tank
+    vessel
+    cargo
+    berth
+  )
+  (:predicates
+    (train1_blend_ratio_fixed)
+    (train2_blend_ratio_fixed)
+    (train1_production_rate_fixed)
+    (train2_production_rate_fixed)
+    (train1_hhv_fixed)
+    (train2_hhv_fixed)
+    (field2_ramp_up_fixed)
+    (field1_ramp_down_fixed)
+    (tank_a_capacity_fixed)
+    (tank_b_capacity_fixed)
+    (tank_c_capacity_fixed)
+    (tank_connectivity_fixed)
+    (tank_withdrawal_fixed)
+    (tank_top_risk_fixed)
+    (operational_buffer_fixed)
+    (boil_off_cost_fixed)
+    (berth_capacity_fixed)
+    (berth_turnaround_fixed)
+    (loading_rate_fixed)
+    (tidal_windows_fixed)
+    (demurrage_cost_fixed)
+    (term_contracts_fixed)
+    (term_laycan_windows_fixed)
+    (term_laycan_compliance_fixed)
+    (spot_opportunities_fixed)
+    (spot_prices_fixed)
+    (spot_acceptance_probability_fixed)
+    (spot_decision_fixed)
+    (hhv_specification_fixed)
+    (hhv_compliance_probability_fixed)
+    (hhv_penalty_fixed)
+    (cargo_hhv_fixed)
+    (tank_hhv_evolution_fixed)
+    (planning_horizon_fixed)
+    (time_discretization_fixed)
+    (vessel_eta_uncertainty_fixed)
+    (uncertainty1_fixed)
+    (uncertainty2_fixed)
+    (uncertainty3_fixed)
+    (uncertainty4_fixed)
+    (uncertainty5_fixed)
+    (uncertainty6_fixed)
+    (objectives_fixed)
+  )
+  (:action enforce_train1_blend_ratio
+    :precondition (not (train1_blend_ratio_fixed))
+    :effect (train1_blend_ratio_fixed)
+  )
+  (:action enforce_train2_blend_ratio
+    :precondition (not (train2_blend_ratio_fixed))
+    :effect (train2_blend_ratio_fixed)
+  )
+  (:action enforce_train1_production_rate
+    :precondition (not (train1_production_rate_fixed))
+    :effect (train1_production_rate_fixed)
+  )
+  (:action enforce_train2_production_rate
+    :precondition (not (train2_production_rate_fixed))
+    :effect (train2_production_rate_fixed)
+  )
+  (:act...
+INFO:root:================================================================================
+INFO:root:Registered tank_a_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_b_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_c_level: range=[0.0, 160000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=159000.00
+INFO:lng_semantics:Initialized LNG semantic NeuroSym graph.
+INFO:RobustnessPipeline:LNG semantic layer enabled (NeuroSym graph initialized).
+INFO:RobustnessPipeline:RobustnessPipeline initialized with Industrial-Grade upgrades.
+INFO:root:Applied safety buffers to discretized variables
+INFO:root:Translated MiniZinc → PPDDL via LLM (with structured constraints)
+INFO:root:Registered tank_a_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_b_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_c_level: range=[0.0, 160000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=159000.00
+INFO:lng_semantics:Initialized LNG semantic NeuroSym graph.
+INFO:RobustnessPipeline:LNG semantic layer enabled (NeuroSym graph initialized).
+INFO:RobustnessPipeline:RobustnessPipeline initialized with Industrial-Grade upgrades.
+INFO:RobustnessPipeline:ROBUSTNESS FIX #1 & #3: PPDDL Model & Physics Checking
+INFO:root:✓ Model checking: All MiniZinc invariants properly enforced
+INFO:RobustnessPipeline:ROBUSTNESS FIX #1 & #3: PPDDL Model & Physics Checking
+INFO:RobustnessPipeline:ROBUSTNESS FIX #5: FF-REPLAN-Approximation: Plan found via determinization.
+INFO:root:Plan comparison (iter 8 vs 9): similarity=1.000, length_diff=0
+INFO:root:  ✗ No plan found
+INFO:root:
+--- Iteration 10/10 ---
+INFO:RobustnessPipeline:Kalman (Train 1): μ=1087.5, trend=0.369 (damped)
+INFO:RobustnessPipeline:Kalman (Train 2): μ=1056.6, trend=-0.122 (damped)
+INFO:root:  Train 1 HHV: 1087.5 ± 4.3 BTU/scf (true=1088.0, error=0.5, trend=0.369 BTU/scf per obs)
+INFO:root:  Train 2 HHV: 1056.6 ± 4.3 BTU/scf (true=1062.0, error=5.4, trend=-0.122 BTU/scf per obs)
+INFO:root:  Spot Market: Price=$89.2M, Available=True
+INFO:root:Extracted MiniZinc constraints (structured, formal)
+INFO:root:MiniZinc preview: % Problem: lng_offtake
+% Description: LNG Offtake Optimization Problem
+
+Goal: Maximize value realization over a rolling 30-day horizon by meeting term contract obligations and exploiting probabilistic spot cargo opportunities, while explicitly representing uncertainty in product quality (HHV), vessel arrival times, and spot prices.
+
+Physical Context:
+- Two LNG trains operate in parallel with fixed upstream feed blends:
+  * Train 2 (ConocoPhillips Cascade): 100% Field 2, leaner gas (HHV: 1048-106...
+INFO:root:================================================================================
+INFO:root:LLM PROMPT:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:
+You are translating structured MiniZinc constraints to PPDDL.
+
+The problem is: LNG Offtake Optimization Problem
+
+Goal: Maximize value realization over a rolling 30-day horizon by meeting term contract obligations and exploiting probabilistic spot cargo opportunities, while explicitly representing uncertainty in product quality (HHV), vessel arrival times, and spot prices.
+
+Physical Context:
+- Two LNG trains operate in parallel with fixed upstream feed blends:
+  * Train 2 (ConocoPhillips Cascade): 100% Field 2, leaner gas (HHV: 1048-1065 BTU/scf, mean=1057, uncertainty ±4)
+  * Train 1 (Shell Mixed Refrigerant): 41-59% Field 1:Field 2 ratio (HHV: 1079-1096 BTU/scf, mean=1088, uncertainty ±4)
+- Field 2 is ramping up (production increasing 5% per week) while Field 1 ramps down
+- Production rates: Train 1: 4.5 MTPA, Train 2: 5.0 MTPA (maximized subject to maintenance)
+- Storage: 3 tanks (Tank A: 180k m³, Tank B: 180k m³, Tank C: 160k m³)
+- Tank connectivity: Train 1 → Tank A, B; Train 2 → Tank B, C; All tanks → Berth
+- Berth: Single berth with 24hr turnaround time between vessels
+
+Decisions:
+1. Cargo timing: load start/end within laycan windows (term contracts have ±2 day flexibility)
+2. Vessel sequencing and berth assignment (no overlap, 24hr clearance)
+3. Tank withdrawals per cargo (which tanks feed which cargo, respecting connectivity)
+4. Spot cargo acceptance: binary decision per opportunity (5 spot opportunities over horizon)
+5. Operational buffers: maintain 20% tank headroom to absorb ETA variance
+
+Objectives:
+- Primary: Maximize expected net value = revenues - costs - penalties
+- Revenues: Term cargoes ($80M each, 75k m³), Spot cargoes ($85-95M, 70k m³, price uncertain)
+- Costs: Demurrage ($50k/day if loading delayed), boil-off ($200k/day tank holding)
+- Penalties: Off-spec HHV ($2M penalty if outside 1055-1095 BTU/scf), tank-top risk ($5M if >95% full)
+
+Uncertainties:
+1. Product quality (HHV): Distributions per train with ±10 BTU/scf variance, evolving as Field ...
+INFO:root:--------------------------------------------------------------------------------
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:root:LLM RESPONSE:
+INFO:root:--------------------------------------------------------------------------------
+INFO:root:===DOMAIN===
+(define (domain LNG-Offtake-Optimization)
+  (:requirements :strips :typing :negation :equality :conditional-effects :adl)
+  (:types
+    train
+    tank
+    vessel
+    cargo
+    berth
+    time
+  )
+  
+  (:predicates
+    (train1-blend-ratio)
+    (train2-blend-ratio)
+    (train1-production-rate)
+    (train2-production-rate)
+    (train1-hhv)
+    (train2-hhv)
+    (field2-ramp-up)
+    (field1-ramp-down)
+    (tank-a-capacity)
+    (tank-b-capacity)
+    (tank-c-capacity)
+    (tank-connectivity)
+    (tank-withdrawal)
+    (tank-top-risk)
+    (operational-buffer)
+    (boil-off-cost)
+    (berth-capacity)
+    (berth-turnaround)
+    (loading-rate)
+    (tidal-windows)
+    (demurrage-cost)
+    (term-contracts)
+    (term-laycan-windows)
+    (term-laycan-compliance)
+    (spot-opportunities)
+    (spot-prices)
+    (spot-acceptance-probability)
+    (spot-decision)
+    (hhv-specification)
+    (hhv-compliance-probability)
+    (hhv-penalty)
+    (cargo-hhv)
+    (tank-hhv-evolution)
+    (planning-horizon)
+    (time-discretization)
+    (vessel-eta-uncertainty)
+    (uncertainty1)
+    (uncertainty2)
+    (uncertainty3)
+    (uncertainty4)
+    (uncertainty5)
+    (uncertainty6)
+  )
+
+  (:action enforce-train1-blend-ratio
+    :precondition (not (train1-blend-ratio))
+    :effect (train1-blend-ratio)
+  )
+
+  (:action enforce-train2-blend-ratio
+    :precondition (not (train2-blend-ratio))
+    :effect (train2-blend-ratio)
+  )
+
+  (:action enforce-train1-production-rate
+    :precondition (not (train1-production-rate))
+    :effect (train1-production-rate)
+  )
+
+  (:action enforce-train2-production-rate
+    :precondition (not (train2-production-rate))
+    :effect (train2-production-rate)
+  )
+
+  (:action enforce-train1-hhv
+    :precondition (not (train1-hhv))
+    :effect (train1-hhv)
+  )
+
+  (:action enforce-train2-hhv
+    :precondition (not (train2-hhv))
+    :effect (train2-hhv)
+  )
+
+  (:action enforce-field2-ramp-up
+    :precondition (not (field2-ramp-up))
+    :effect (field2-ramp-up)
+  )
+
+  (:action...
+INFO:root:================================================================================
+INFO:root:Registered tank_a_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_b_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_c_level: range=[0.0, 160000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=159000.00
+INFO:lng_semantics:Initialized LNG semantic NeuroSym graph.
+INFO:RobustnessPipeline:LNG semantic layer enabled (NeuroSym graph initialized).
+INFO:RobustnessPipeline:RobustnessPipeline initialized with Industrial-Grade upgrades.
+INFO:root:Applied safety buffers to discretized variables
+INFO:root:Translated MiniZinc → PPDDL via LLM (with structured constraints)
+INFO:root:Registered tank_a_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_b_level: range=[0.0, 180000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=179000.00
+INFO:root:Registered tank_c_level: range=[0.0, 160000.0], bin_size=1000.0, safety_buffer=1000.00, max_safe=159000.00
+INFO:lng_semantics:Initialized LNG semantic NeuroSym graph.
+INFO:RobustnessPipeline:LNG semantic layer enabled (NeuroSym graph initialized).
+INFO:RobustnessPipeline:RobustnessPipeline initialized with Industrial-Grade upgrades.
+INFO:RobustnessPipeline:ROBUSTNESS FIX #1 & #3: PPDDL Model & Physics Checking
+INFO:root:✓ Model checking: All MiniZinc invariants properly enforced
+INFO:RobustnessPipeline:ROBUSTNESS FIX #1 & #3: PPDDL Model & Physics Checking
+INFO:RobustnessPipeline:ROBUSTNESS FIX #5: FF-REPLAN-Approximation: Plan found via determinization.
+INFO:root:Plan comparison (iter 9 vs 10): similarity=1.000, length_diff=0
+INFO:root:  ✗ No plan found
+INFO:root:
+✓ Adaptive learning complete
+INFO:root:  Final Train 1 HHV: 1087.5 ± 4.3 BTU/scf
+INFO:root:  Final Train 2 HHV: 1056.6 ± 4.3 BTU/scf
+INFO:root:  Total observations: 100
+INFO:root:
+================================================================================
+INFO:root:APPROACH COMPARISON
+INFO:root:================================================================================
+INFO:root:✓ Comparison saved to lng_offtake_output/comparison.json
+INFO:root:
+================================================================================
+INFO:root:DEMO COMPLETE
+INFO:root:================================================================================
+INFO:root:Results saved to: lng_offtake_output
+INFO:root:Approaches run: ['baseline', 'hybrid', 'adaptive']
+INFO:root:
+Next steps:
+INFO:root:  1. Review generated PPDDL files in output directory
+INFO:root:  2. Examine planner outputs for plan quality
+INFO:root:  3. Compare approaches using comparison.json
+INFO:root:  4. Review learning convergence in learning_history.json (adaptive)
+
+--------------------------------------------------------------------------------
+Metric Comparison:
+--------------------------------------------------------------------------------
+Approach        Time (s)     Domain     Problem    Planner   
+--------------------------------------------------------------------------------
+baseline        304.30       1368       523        ✗         
+hybrid          29.56        5553       1482       ✓         
+adaptive        0.00         0          0          ✓         
+--------------------------------------------------------------------------------
+INFO:root:Generating visualizations...
+INFO:root:✓ Learning convergence plot saved to lng_offtake_output/learning_convergence.png
+INFO:root:✓ Approach comparison plot saved to lng_offtake_output/approach_comparison.png
+INFO:root:✓ Executive summary plot saved to lng_offtake_output/executive_summary.png
+INFO:root:✓ All visualizations generated

@@ -1,0 +1,35 @@
+{
+    "initial_state":
+    {
+        "arm1" : "home",
+        "arm2" : "home",
+        "blockAabove" : "nothing",
+        "blockAbelow" : "blockB",
+        "blockBabove" : "blockA",
+        "blockBbelow" : "blockC",
+        "blockCabove" : "blockB",
+        "blockCbelow" : "floor",
+        "floorabove" : "blockC"
+
+    },
+    "end_state":
+    {
+        "maintenance_constraint" : "true",
+        "goal_constraint" : "arm1l[i+1]==home /\\ arm2l[i+1]==home /\\ blockAabove[i+1]==nothing /\\ blockAbelow[i+1]==floor /\\blockBabove[i+1]==nothing /\\ blockBbelow[i+1]==blockC /\\ blockCabove[i+1]==blockB /\\ blockCbelow[i+1]==floor /\\ floorabove[i+1]==blockA"
+    },
+    "constraints":
+    {
+        "episodes":
+        {
+
+        },
+        "temporal":
+        {
+
+        },
+        "event":
+        {
+ 
+        }
+    }
+}

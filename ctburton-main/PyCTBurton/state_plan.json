@@ -1,0 +1,42 @@
+{
+    "initial_state":
+    {
+        "comp" : "compOff",
+        "conn" : "disconnected",
+        "proj" : "projOff"
+    },
+    "end_state":
+    {
+        "maintenance_constraint" : "true",
+        "goal_constraint" : "compl[i+1]==compOff /\\ connl[i+1]==disconnected /\\ projl[i+1]==projOff"
+    },
+    "constraints":
+    {
+        "episodes":
+        {
+            "Aasdas":
+            {
+                "accepting_constraint": "projl[i]==projOn",
+                "state_constraint" : "projl[i]==projOn",
+                "lower_bound": 1800,
+                "upper_bound": 1800
+            }
+        },
+
+        "temporal":
+        {
+            "last600":
+            {
+                "accepting_event1_constraint": "projl[i]==projOn /\\ projl[i+1]==projConfirm",
+                "accepting_event2_constraint": "projl[i+1]==projOff /\\ connl[i+1]==disconnected /\\ compl[i+1]=compOff /\\ temporalAcceptConstraint_Traj_last600[i]==tempActive",
+                "lower_bound": 600,
+                "upper_bound": 600
+            }
+        },
+
+        "event":
+        {
+
+        }
+    }
+}

@@ -1,0 +1,50 @@
+(define (domain lng-offtake)
+  (:requirements :strips :typing :negation :equality :conditional-effects :adl)
+  (:types
+        object
+        train1 train2 - Trains
+            tankA tankB tankC - Tanks
+            vessel - Vessels
+            term_cargo spot_cargo - Cargoes
+            day - Time Periods
+          
+    )
+  
+  (:predicates
+    (tank_level ?t - Tanks )
+    (tank_full ?t - Tanks)
+    (tank_min_heel ?t - Tanks)
+    (berth_occupied ?v - Vessels)
+    (berth_available)
+    (vessel_arrived ?v - Vessels ?time - day)
+    (vessel_eta ?v - Vessels ?time - day)
+    (cargo_loaded ?c - Cargoes ?v - Vessels)
+    (cargo_accepted ?c - Cargoes)
+    (cargo_timing ?c - Cargoes ?start_time - day ?end_time - day)
+    (hhv_within_spec ?c - Cargoes)
+    (operational_buffer ?t - Tanks)
+  )
+
+  (:action charge
+    :precondition (and (tank_min_heel ?t) (not (tank_full ?t)))
+    :effect (whenp 0.9 (tank_level ?t  10)))
+  )
+
+  (:action drive
+    :parameters (?v - Vessels )
+    :precondition (and (berth_occupied ?v) (berth_available))
+    :effect (whenp 0.9 (berth_occupied ?v))
+  )
+
+  (:action diagnostics
+    :parameters (?v - Vessels)
+    :precondition (berth_occupied ?v)
+    :effect (whenp 0.9 (cargo_loaded term_cargo ?v))
+  )
+
+  (:action dock
+    :parameters (?v - Vessels)
+    :precondition (berth_available)
+    :effect (whenp 0.9 (berth_occupied ?v))
+  )
+)

@@ -1,0 +1,124 @@
+{
+    "state_plan_file_path": "state_plan_compOn.json",
+    "Fupper": 25000,
+    "h": 10,
+    "automata_types": [
+      "comp",
+      "conn",
+      "proj"
+    ],
+    "instantiated_automata": [
+      "comp",
+      "conn",
+      "proj"
+    ],
+    "tr" : 27,
+    "transition_types" : ["idle", "reset"],
+    "transitions":
+      {
+        "idle":
+          {
+            "comp": [
+              5,
+              6,
+              7,
+              8
+            ],
+            "conn": [
+              11,
+              12
+            ],
+            "proj": [
+              21,
+              22,
+              23,
+              24,
+              25,
+              26
+            ]
+          },
+
+        "reset":
+          {
+            "comp": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "conn": [
+              9,
+              10
+            ],
+            "proj": [
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              27
+            ]
+          },
+        "state_changing": [
+          1,
+          2,
+          3,
+          4,
+          9,
+          10,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          27
+        ]
+      },
+    "automata_locations":
+    {
+        "comp" : 
+            [
+                "compOn",
+                "compShutdown",
+                "compOff",
+                "compBooting"
+            ],
+        "conn" : 
+            [
+                "connected",
+                "disconnected"
+            ],
+        "proj" : 
+            [
+                "projWaiting",
+                "projConfirm",
+                "projOn",
+                "projCoolDown",
+                "projWarmUp",
+                "projOff"
+            ]
+    },
+    "automata_actions":
+    {
+        "comp" : 
+            [
+                "compTurnOn", "compTurnOff"
+            ],
+        "conn" : 
+            [
+                "connect",
+                "disconnect"
+            ],
+        "proj" : 
+            [
+                "projTurnOn",
+                "projTurnOff"
+            ]
+    }
+}

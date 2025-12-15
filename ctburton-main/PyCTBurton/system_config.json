@@ -1,0 +1,15 @@
+{
+    "transition_offset" : 0,
+    "end_state_accepting_automaton": {
+        "locations": ["waiting", "accepted", "failed"],
+        "transitions": [28, 29, 30, 31, 32]
+    },
+    "episode_accepting_automaton": {
+        "locations": ["epWaiting", "epActive", "epAccepted", "epFailed"],
+        "transitions": [33, 34, 35, 36, 37, 38, 39]
+    },
+    "temporal_constraint_accepting_automaton": {
+        "locations": ["tempWaiting", "tempActive", "tempAccepted", "tempFailed"],
+        "transitions": [41, 42, 43, 44, 45, 46]
+    }
+}

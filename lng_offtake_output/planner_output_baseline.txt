@@ -1,0 +1,7 @@
+
+ff: parsing domain file
+domain 'LNG-OFFTAKE' defined
+
+
+/tmp/tmplu_4qdob/domain.ppddl: syntax error in line 33, '(':
+domain definition expected

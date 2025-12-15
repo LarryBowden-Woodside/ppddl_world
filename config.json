@@ -1,0 +1,48 @@
+{
+  "num_candidates": 3,
+  "max_attempts": 5,
+  "llm_config": {
+    "model": "gpt-4o-mini",
+    "temperature": 0.2,
+    "max_tokens": 4000,
+    "timeout": 30
+  },
+  "planner_config": {
+    "timeout": 180,
+    "debug_mode": false
+  },
+  "problem_templates": {
+    "rover": "Problem 1 - Rover\n\nA rover has 120 minutes to reach destination-1 and then dock with the mothership. The rover must drive to destination-1, which is a journey that takes between 30 to 40 minutes, that the rover has control over (depending on what speed is selected). Driving faster costs more energy, each minute saved in driving (from 40 mins) costs 2% in battery charge. The rover starts at a battery charging station with 60% battery charge and can choose to charge the batteries before it embarks on the journey. The rover should maximise the amount of battery charge it has by the time it finishes docking. For each minute spent charging, the battery gains 1% charge up to 80%. After 80%, it takes 2 minutes for each 1% increase in battery state of charge. Docking with the mothership takes 20 minutes and can only be done after reaching destination-1. The rover can choose to run a diagnostic check at the start of the mission, which takes 10 minutes and offers no benefit.",
+    "ctburton_computer_projector": "Computer-Projector Connection Problem\n\nA computer system needs to establish a connection with a projector within a specified time window. The system has multiple states: idle, connecting, connected, and error. The connection process involves:\n- Initialization phase (5-10 minutes)\n- Connection establishment (2-5 minutes)\n- Verification phase (1-3 minutes)\n- Optional diagnostic check (3-5 minutes)\n\nThe system should minimize connection time while maximizing reliability. Connection failures occur with 10% probability and require restart from idle state. The system has a battery constraint and must complete the connection within 30 minutes total.",
+    "search_rescue": "Search and Rescue Mission\n\nA rescue team has 60 minutes to locate and extract survivors from a disaster site. The team can:\n- Search different areas (takes 10-15 minutes per area)\n- Extract survivors (takes 5-8 minutes per person)\n- Call for backup (takes 15 minutes but increases success probability)\n- Perform medical triage (takes 3-5 minutes per person)\n\nEach area has a probability of containing survivors. The team should maximize the number of survivors rescued while staying within the time constraint. Weather conditions affect search efficiency with 20% degradation during storms.",
+    "lng_offtake": "LNG Offtake Optimization Problem\n\nGoal: Maximize value realization over a rolling 30-day horizon by meeting term contract obligations and exploiting probabilistic spot cargo opportunities, while explicitly representing uncertainty in product quality (HHV), vessel arrival times, and spot prices.\n\nPhysical Context:\n- Two LNG trains operate in parallel with fixed upstream feed blends:\n  * Train 2 (ConocoPhillips Cascade): 100% Field 2, leaner gas (HHV: 1050-1070 BTU/scf, mean=1060, uncertainty ±10)\n  * Train 1 (Shell Mixed Refrigerant): 41-59% Field 1:Field 2 ratio (HHV: 1080-1100 BTU/scf, mean=1090, uncertainty ±10)\n- Field 2 is ramping up (production increasing 5% per week) while Field 1 ramps down\n- Production rates: Train 1: 4.5 MTPA, Train 2: 5.0 MTPA (maximized subject to maintenance)\n- Storage: 3 tanks (Tank A: 180k m³, Tank B: 180k m³, Tank C: 160k m³)\n- Tank connectivity: Train 1 → Tank A, B; Train 2 → Tank B, C; All tanks → Berth\n- Berth: Single berth with 24hr turnaround time between vessels\n\nDecisions:\n1. Cargo timing: load start/end within laycan windows (term contracts have ±2 day flexibility)\n2. Vessel sequencing and berth assignment (no overlap, 24hr clearance)\n3. Tank withdrawals per cargo (which tanks feed which cargo, respecting connectivity)\n4. Spot cargo acceptance: binary decision per opportunity (5 spot opportunities over horizon)\n5. Operational buffers: maintain 20% tank headroom to absorb ETA variance\n\nObjectives:\n- Primary: Maximize expected net value = revenues - costs - penalties\n- Revenues: Term cargoes ($80M each, 75k m³), Spot cargoes ($85-95M, 70k m³, price uncertain)\n- Costs: Demurrage ($50k/day if loading delayed), boil-off ($200k/day tank holding)\n- Penalties: Off-spec HHV ($2M penalty if outside 1055-1095 BTU/scf), tank-top risk ($5M if >95% full)\n\nUncertainties:\n1. Product quality (HHV): Distributions per train with ±10 BTU/scf variance, evolving as Field 2 ramps\n2. Vessel ETAs: ±1-2 days from scheduled arrival (weather, port congestion)\n3. Spot prices: $85-95M per cargo (market volatility), 70% acceptance probability\n4. Production rates: ±5% variance around nominal (maintenance, feed quality)\n\nConstraints:\n1. Production: Fixed feed blends (non-negotiable), maximize output subject to train limits\n2. Storage: Mass balance per tank, min/max levels (10% min heel, 95% max), connectivity limits\n3. Berth: Single berth, 24hr turnaround, loading rate 8-12k m³/hr (weather dependent)\n4. Marine: Tidal windows (6hr/day no-sail), laycan compliance (term contracts must load within ±2 days)\n5. Quality: HHV spec 1055-1095 BTU/scf with ≥95% probability, or $2M penalty\n6. Commercial: 4 term contracts (fixed dates ±2 days, 75k m³ each), 5 spot opportunities (optional, 70k m³ each)\n\nRequired Outputs:\n1. Optimized loading plan: vessel sequence, load windows, berth schedule\n2. Tank draw plan: which tanks feed which cargoes, expected HHV distributions per cargo\n3. Spot opportunity assessment: acceptance decision per spot, expected value, risk metrics\n4. Reliability KPIs: expected demurrage, boil-off costs, off-spec probability, tank-top alerts\n5. Uncertainty quantification: value distribution (P10/P50/P90), downside risk, sensitivity to HHV variance"
+  },
+  "ppddl_templates": {
+    "domain_header": "Requirements: :strips :typing :negative-preconditions :equality :conditional-effects :probabilistic-effects :rewards :numeric-fluents",
+    "metric": "maximize (expected-total-reward)",
+    "time_format": "discrete minutes",
+    "battery_range": "integer [0..100]"
+  },
+  "neurosym_config": {
+    "belief_propagation": {
+      "damping": 0.85,
+      "iterations": 10
+    },
+    "spreading_activation": {
+      "decay": 0.85,
+      "steps": 3
+    },
+    "argumentation": {
+      "attack_kind": "contradicts"
+    }
+  },
+  "export_formats": {
+    "graphml": true,
+    "rdf_turtle": true,
+    "psl": true,
+    "mln": true,
+    "pyvis_html": true
+  }
+}
+
+

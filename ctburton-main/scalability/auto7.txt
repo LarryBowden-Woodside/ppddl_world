@@ -1,0 +1,178 @@
+constraint forall(i in STAGES)(not Eno7[1,i]); % state changing
+constraint forall(i in STAGES)(not Eno7[2,i]); % state changing
+constraint forall(i in STAGES)(not Eno7[3,i]); % state changing
+constraint forall(i in STAGES)(not Eno7[4,i]); % state changing
+
+constraint forall(i in STAGES)(Eno7[5,i] -> comp7l[i]==compOn /\ openIdlingClock(c, cl, cu, e, co, comp7, i)); % idling
+constraint forall(i in STAGES)(Eno7[6,i] -> comp7l[i]==compShutdown /\ openIdlingClock(c, cl, cu, e, co, comp7, i)); % idling
+constraint forall(i in STAGES)(Eno7[7,i] -> comp7l[i]==compOff /\ openIdlingClock(c, cl, cu, e, co, comp7, i)); % idling
+constraint forall(i in STAGES)(Eno7[8,i] -> comp7l[i]==compBooting /\ openIdlingClock(c, cl, cu, e, co, comp7, i)); % idling
+
+constraint forall(i in STAGESm1)(Ene7[1,i] -> 
+  comp7l[i]==compOn /\ comp7l[i+1]==compShutdown /\ 
+  comp7u[i]==compTurnOff /\ 
+  closeChangeClock(c, cl, cu, e, co, comp7, i) /\ 
+  cvs(e, co, comp7, i) /\ cps(co, cl, cu, comp7, i)); % state changing
+constraint forall(i in STAGESm1)(Ene7[2,i] -> 
+  comp7l[i]==compShutdown /\ comp7l[i+1]==compOff /\ 
+  c[comp7,i]==30 /\
+  closeChangeClock(c, cl, cu, e, co, comp7, i) /\ 
+  cvs(e, co, comp7, i) /\ cps(co, cl, cu, comp7, i)); % state changing
+constraint forall(i in STAGESm1)(Ene7[3,i] ->
+  comp7l[i]==compOff /\ comp7l[i+1]==compBooting /\ 
+  comp7u[i]==compTurnOn /\
+  closeChangeClock(c, cl, cu, e, co, comp7, i) /\ 
+  cvs(e, co, comp7, i) /\ cps(co, cl, cu, comp7, i)); % state changing
+constraint forall(i in STAGESm1)(Ene7[4,i] ->
+  comp7l[i]==compBooting /\ comp7l[i+1]==compOn /\ 
+  c[comp7,i]==15 /\
+  closeChangeClock(c, cl, cu, e, co, comp7, i) /\ 
+  cvs(e, co, comp7, i) /\ cps(co, cl, cu, comp7, i)); % state changing
+
+constraint forall(i in STAGESm1)(Ene7[5,i] ->
+  comp7l[i]==compOn /\ comp7l[i+1]==compOn /\ comp7u[i]!=compTurnOff /\
+  closeIdlingClock(c, cl, cu, e, co, comp7, i) /\ 
+  cps(co, cl, cu, comp7, i)); % idling
+constraint forall(i in STAGESm1)(Ene7[6,i] ->
+  comp7l[i]==compShutdown /\ comp7l[i+1]==compShutdown /\
+  closeIdlingClock(c, cl, cu, e, co, comp7, i) /\ 
+  cps(co, cl, cu, comp7, i)); % idling
+constraint forall(i in STAGESm1)(Ene7[7,i] ->
+  comp7l[i]==compOff /\ comp7l[i+1]==compOff /\ comp7u[i]!=compTurnOn /\
+  closeIdlingClock(c, cl, cu, e, co, comp7, i)  /\ 
+  cps(co, cl, cu, comp7, i)); % idling
+constraint forall(i in STAGESm1)(Ene7[8,i] ->
+  comp7l[i]==compBooting /\ comp7l[i+1]==compBooting /\
+  closeIdlingClock(c, cl, cu, e, co, comp7, i) /\ 
+  cps(co, cl, cu, comp7, i)); % idling
+
+% HARDCODED transition constraints for CONNECTION
+constraint forall(i in STAGES)(not Eno7[9,i]); % state changing
+constraint forall(i in STAGES)(not Eno7[10,i]); % state changing
+
+constraint forall(i in STAGES)(Eno7[11,i] -> conn7l[i]==connected /\ openIdlingClock(c, cl, cu, e, co, conn7, i)); % idling
+constraint forall(i in STAGES)(Eno7[12,i] -> conn7l[i]==disconnected /\ openIdlingClock(c, cl, cu, e, co, conn7, i)); % idling
+
+constraint forall(i in STAGESm1)(Ene7[9,i] -> 
+  conn7l[i]==connected /\ conn7l[i+1]==disconnected /\
+  conn7u[i]==disconnect /\
+  closeChangeClock(c, cl, cu, e, co, conn7, i) /\ 
+  cvs(e, co, conn7, i) /\ cps(co, cl, cu, conn7, i)); % state changing
+
+constraint forall(i in STAGESm1)(Ene7[10,i] ->
+  conn7l[i]==disconnected /\ conn7l[i+1]==connected /\ 
+  conn7u[i]==connect /\ comp7l[i]==compOff /\
+  closeChangeClock(c, cl, cu, e, co, conn7, i) /\ 
+  cvs(e, co, conn7, i) /\ cps(co, cl, cu, conn7, i)); % state changing
+
+constraint forall(i in STAGESm1)(Ene7[11,i] -> 
+  conn7l[i]==connected /\ conn7l[i+1]=connected /\ conn7u[i]!=disconnect /\
+  closeIdlingClock(c, cl, cu, e, co, conn7, i) /\ 
+  cps(co, cl, cu, conn7, i)); % idling
+
+constraint forall(i in STAGESm1)(Ene7[12,i] -> 
+  conn7l[i]==disconnected /\ conn7l[i+1]=disconnected /\ conn7u[i]!=connect /\
+  closeIdlingClock(c, cl, cu, e, co, conn7, i) /\ 
+  cps(co, cl, cu, conn7, i)); % idling
+
+% % HARDCODED transition constraints for PROJECTOR
+constraint forall(i in STAGES)(not Eno7[13,i]); % state changing
+constraint forall(i in STAGES)(not Eno7[14,i]); % state changing
+constraint forall(i in STAGES)(not Eno7[15,i]); % state changing
+constraint forall(i in STAGES)(not Eno7[16,i]); % state changing
+constraint forall(i in STAGES)(not Eno7[17,i]); % state changing
+constraint forall(i in STAGES)(not Eno7[18,i]); % state changing
+constraint forall(i in STAGES)(not Eno7[19,i]); % state changing
+constraint forall(i in STAGES)(not Eno7[20,i]); % state changing
+constraint forall(i in STAGES)(not Eno7[27,i]); % state changing
+constraint forall(i in STAGES)(Eno7[21,i] -> proj7l[i]==projOff /\ openIdlingClock(c, cl, cu, e, co, proj7, i)); % idling
+constraint forall(i in STAGES)(Eno7[22,i] -> proj7l[i]==projWarmUp /\ openIdlingClock(c, cl, cu, e, co, proj7, i)); % idling
+constraint forall(i in STAGES)(Eno7[23,i] -> proj7l[i]==projOn /\ openIdlingClock(c, cl, cu, e, co, proj7, i)); % idling
+constraint forall(i in STAGES)(Eno7[24,i] -> proj7l[i]==projConfirm /\ openIdlingClock(c, cl, cu, e, co, proj7, i)); % idling
+constraint forall(i in STAGES)(Eno7[25,i] -> proj7l[i]==projCoolDown /\ openIdlingClock(c, cl, cu, e, co, proj7, i)); % idling
+constraint forall(i in STAGES)(Eno7[26,i] -> proj7l[i]==projWaiting /\ openIdlingClock(c, cl, cu, e, co, proj7, i)); % idling
+  
+constraint forall(i in STAGESm1)(Ene7[13,i] ->
+  proj7l[i]==projOff /\ proj7l[i+1]==projWarmUp /\ 
+  proj7u[i]==projTurnOn /\
+  closeChangeClock(c, cl, cu, e, co, proj7, i) /\ 
+  cvs(e, co, proj7, i) /\ cps(co, cl, cu, proj7, i)); % state changing
+  
+constraint forall(i in STAGESm1)(Ene7[14,i] -> 
+  proj7l[i]==projWarmUp /\ proj7l[i+1]==projOn /\ 
+  c[proj7,i] == 30 /\
+  closeChangeClock(c, cl, cu, e, co, proj7, i) /\ 
+  cvs(e, co, proj7, i) /\ cps(co, cl, cu, proj7, i)); % state changing
+  
+constraint forall(i in STAGESm1)(Ene7[15,i] -> 
+  proj7l[i]==projOn /\ proj7l[i+1]==projConfirm /\ 
+  proj7u[i]==projTurnOff /\
+  closeChangeClock(c, cl, cu, e, co, proj7, i) /\ 
+  cvs(e, co, proj7, i) /\ cps(co, cl, cu, proj7, i)); % state changing
+  
+constraint forall(i in STAGESm1)(Ene7[16,i] -> 
+  proj7l[i]==projOn /\ proj7l[i+1]==projWaiting /\ 
+  (comp7l[i]!=compOn \/ conn7l[i]!=connected) /\ proj7u[i]!=projTurnOff /\
+  closeChangeClock(c, cl, cu, e, co, proj7, i) /\ 
+  cvs(e, co, proj7, i) /\ cps(co, cl, cu, proj7, i)); % state changing
+  
+constraint forall(i in STAGESm1)(Ene7[17,i] -> 
+  proj7l[i]==projConfirm /\ proj7l[i+1]==projCoolDown /\ 
+  proj7u[i]==projTurnOff /\ inRange(c[proj7,i],cl[proj7,i],cu[proj7,i]) /\
+  closeChangeClock(c, cl, cu, e, co, proj7, i) /\ 
+  cvs(e, co, proj7, i) /\ cps(co, cl, cu, proj7, i)); % state changing
+  
+constraint forall(i in STAGESm1)(Ene7[18,i] -> 
+  proj7l[i]==projWaiting /\ proj7l[i+1]==projCoolDown /\ 
+  (comp7l[i]!=compOn \/ conn7l[i]!=connected) /\ c[proj7,i]==60 /\
+  closeChangeClock(c, cl, cu, e, co, proj7, i) /\ 
+  cvs(e, co, proj7, i) /\ cps(co, cl, cu, proj7, i)); % state changing
+
+constraint forall(i in STAGESm1)(Ene7[19,i] -> 
+  proj7l[i]==projWaiting /\ proj7l[i+1]==projOn /\ 
+  comp7l[i]==compOn /\ conn7l[i]==connected /\
+  closeChangeClock(c, cl, cu, e, co, proj7, i) /\ 
+  cvs(e, co, proj7, i) /\ cps(co, cl, cu, proj7, i)); % state changing
+  
+constraint forall(i in STAGESm1)(Ene7[20,i] -> 
+  proj7l[i]==projConfirm /\ proj7l[i+1]==projOn /\ 
+  proj7u[i]!=projTurnOff /\ c[proj7,i]==5 /\
+  closeChangeClock(c, cl, cu, e, co, proj7, i) /\ 
+  cvs(e, co, proj7, i) /\ cps(co, cl, cu, proj7, i)); % state changing
+
+constraint forall(i in STAGESm1)(Ene7[27,i] -> 
+  proj7l[i]==projCoolDown /\ proj7l[i+1]==projOff /\ 
+  c[proj7,i]==60 /\
+  closeChangeClock(c, cl, cu, e, co, proj7, i) /\ 
+  cvs(e, co, proj7, i) /\ cps(co, cl, cu, proj7, i)); % state changing
+
+constraint forall(i in STAGESm1)(Ene7[21,i] -> 
+  proj7l[i]==projOff /\ proj7l[i+1]==projOff /\
+  proj7u[i]!=projTurnOn /\
+  closeIdlingClock(c, cl, cu, e, co, proj7, i) /\ 
+  cps(co, cl, cu, proj7, i)); % idling
+  
+constraint forall(i in STAGESm1)(Ene7[22,i] -> 
+  proj7l[i]==projWarmUp /\ proj7l[i+1]==projWarmUp /\
+  closeIdlingClock(c, cl, cu, e, co, proj7, i) /\ 
+  cps(co, cl, cu, proj7, i)); % idling
+  
+constraint forall(i in STAGESm1)(Ene7[23,i] -> 
+  proj7l[i]==projOn /\ proj7l[i+1]==projOn /\ comp7l[i+1]==compOn /\ conn7l[i+1]==connected /\
+  closeIdlingClock(c, cl, cu, e, co, proj7, i) /\ 
+  cps(co, cl, cu, proj7, i)); % idling
+  
+constraint forall(i in STAGESm1)(Ene7[24,i] -> 
+  proj7l[i]==projConfirm /\ proj7l[i+1]=projConfirm /\
+  closeIdlingClock(c, cl, cu, e, co, proj7, i) /\ 
+  cps(co, cl, cu, proj7, i)); % idling
+  
+constraint forall(i in STAGESm1)(Ene7[25,i] -> 
+  proj7l[i]==projCoolDown /\ proj7l[i+1]==projCoolDown /\
+  closeIdlingClock(c, cl, cu, e, co, proj7, i) /\ 
+  cps(co, cl, cu, proj7, i)); % idling
+  
+constraint forall(i in STAGESm1)(Ene7[26,i] -> 
+  proj7l[i]==projWaiting /\ proj7l[i+1]==projWaiting /\
+  closeIdlingClock(c, cl, cu, e, co, proj7, i) /\ 
+  cps(co, cl, cu, proj7, i)); % idling

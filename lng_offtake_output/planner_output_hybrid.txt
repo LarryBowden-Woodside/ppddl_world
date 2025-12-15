@@ -1,0 +1,8 @@
+
+ff: parsing domain file
+domain 'LNG-OFFTAKE-OPTIMIZATION' defined
+ ... done.
+ff: parsing problem file
+
+/tmp/tmpm1_t5bli/problem.ppddl: syntax error in line 59, '(':
+'define' expected

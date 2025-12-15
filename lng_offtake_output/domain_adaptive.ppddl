@@ -1,0 +1,271 @@
+(define (domain LNG-Offtake-Optimization)
+  (:requirements :strips :typing :negation :equality :conditional-effects :adl)
+  (:types
+        object
+        train
+            tank
+            vessel
+            cargo
+            berth
+            time
+          
+    )
+  
+  (:predicates
+        (tank-c-level-safe ?tank - tank)
+        (tank-b-level-safe ?tank - tank)
+        (tank-a-level-safe ?tank - tank)
+    (train1-blend-ratio)
+    (train2-blend-ratio)
+    (train1-production-rate)
+    (train2-production-rate)
+    (train1-hhv)
+    (train2-hhv)
+    (field2-ramp-up)
+    (field1-ramp-down)
+    (tank-a-capacity)
+    (tank-b-capacity)
+    (tank-c-capacity)
+    (tank-connectivity)
+    (tank-withdrawal)
+    (tank-top-risk)
+    (operational-buffer)
+    (boil-off-cost)
+    (berth-capacity)
+    (berth-turnaround)
+    (loading-rate)
+    (tidal-windows)
+    (demurrage-cost)
+    (term-contracts)
+    (term-laycan-windows)
+    (term-laycan-compliance)
+    (spot-opportunities)
+    (spot-prices)
+    (spot-acceptance-probability)
+    (spot-decision)
+    (hhv-specification)
+    (hhv-compliance-probability)
+    (hhv-penalty)
+    (cargo-hhv)
+    (tank-hhv-evolution)
+    (planning-horizon)
+    (time-discretization)
+    (vessel-eta-uncertainty)
+    (uncertainty1)
+    (uncertainty2)
+    (uncertainty3)
+    (uncertainty4)
+    (uncertainty5)
+    (uncertainty6)
+  )
+
+  (:action enforce-train1-blend-ratio
+    :precondition (not (train1-blend-ratio))
+    :effect (train1-blend-ratio)
+  )
+
+  (:action enforce-train2-blend-ratio
+    :precondition (not (train2-blend-ratio))
+    :effect (train2-blend-ratio)
+  )
+
+  (:action enforce-train1-production-rate
+    :precondition (not (train1-production-rate))
+    :effect (train1-production-rate)
+  )
+
+  (:action enforce-train2-production-rate
+    :precondition (not (train2-production-rate))
+    :effect (train2-production-rate)
+  )
+
+  (:action enforce-train1-hhv
+    :precondition (not (train1-hhv))
+    :effect (train1-hhv)
+  )
+
+  (:action enforce-train2-hhv
+    :precondition (not (train2-hhv))
+    :effect (train2-hhv)
+  )
+
+  (:action enforce-field2-ramp-up
+    :precondition (not (field2-ramp-up))
+    :effect (field2-ramp-up)
+  )
+
+  (:action enforce-field1-ramp-down
+    :precondition (not (field1-ramp-down))
+    :effect (field1-ramp-down)
+  )
+
+  (:action enforce-tank-a-capacity
+    :precondition (not (tank-a-capacity))
+    :effect (tank-a-capacity)
+  )
+
+  (:action enforce-tank-b-capacity
+    :precondition (not (tank-b-capacity))
+    :effect (tank-b-capacity)
+  )
+
+  (:action enforce-tank-c-capacity
+    :precondition (not (tank-c-capacity))
+    :effect (tank-c-capacity)
+  )
+
+  (:action enforce-tank-connectivity
+    :precondition (not (tank-connectivity))
+    :effect (tank-connectivity)
+  )
+
+  (:action enforce-tank-withdrawal
+    :precondition (not (tank-withdrawal))
+    :effect (tank-withdrawal)
+  )
+
+  (:action enforce-tank-top-risk
+    :precondition (not (tank-top-risk))
+    :effect (tank-top-risk)
+  )
+
+  (:action enforce-operational-buffer
+    :precondition (not (operational-buffer))
+    :effect (operational-buffer)
+  )
+
+  (:action enforce-boil-off-cost
+    :precondition (not (boil-off-cost))
+    :effect (boil-off-cost)
+  )
+
+  (:action enforce-berth-capacity
+    :precondition (not (berth-capacity))
+    :effect (berth-capacity)
+  )
+
+  (:action enforce-berth-turnaround
+    :precondition (not (berth-turnaround))
+    :effect (berth-turnaround)
+  )
+
+  (:action enforce-loading-rate
+    :precondition (not (loading-rate))
+    :effect (loading-rate)
+  )
+
+  (:action enforce-tidal-windows
+    :precondition (not (tidal-windows))
+    :effect (tidal-windows)
+  )
+
+  (:action enforce-demurrage-cost
+    :precondition (not (demurrage-cost))
+    :effect (demurrage-cost)
+  )
+
+  (:action enforce-term-contracts
+    :precondition (not (term-contracts))
+    :effect (term-contracts)
+  )
+
+  (:action enforce-term-laycan-windows
+    :precondition (not (term-laycan-windows))
+    :effect (term-laycan-windows)
+  )
+
+  (:action enforce-term-laycan-compliance
+    :precondition (not (term-laycan-compliance))
+    :effect (term-laycan-compliance)
+  )
+
+  (:action enforce-spot-opportunities
+    :precondition (not (spot-opportunities))
+    :effect (spot-opportunities)
+  )
+
+  (:action enforce-spot-prices
+    :precondition (not (spot-prices))
+    :effect (spot-prices)
+  )
+
+  (:action enforce-spot-acceptance-probability
+    :precondition (not (spot-acceptance-probability))
+    :effect (spot-acceptance-probability)
+  )
+
+  (:action enforce-spot-decision
+    :precondition (not (spot-decision))
+    :effect (spot-decision)
+  )
+
+  (:action enforce-hhv-specification
+    :precondition (not (hhv-specification))
+    :effect (hhv-specification)
+  )
+
+  (:action enforce-hhv-compliance-probability
+    :precondition (not (hhv-compliance-probability))
+    :effect (hhv-compliance-probability)
+  )
+
+  (:action enforce-hhv-penalty
+    :precondition (not (hhv-penalty))
+    :effect (hhv-penalty)
+  )
+
+  (:action enforce-cargo-hhv
+    :precondition (not (cargo-hhv))
+    :effect (cargo-hhv)
+  )
+
+  (:action enforce-tank-hhv-evolution
+    :precondition (not (tank-hhv-evolution))
+    :effect (tank-hhv-evolution)
+  )
+
+  (:action enforce-planning-horizon
+    :precondition (not (planning-horizon))
+    :effect (planning-horizon)
+  )
+
+  (:action enforce-time-discretization
+    :precondition (not (time-discretization))
+    :effect (time-discretization)
+  )
+
+  (:action enforce-vessel-eta-uncertainty
+    :precondition (not (vessel-eta-uncertainty))
+    :effect (vessel-eta-uncertainty)
+  )
+
+  (:action enforce-uncertainty1
+    :precondition (not (uncertainty1))
+    :effect (uncertainty1)
+  )
+
+  (:action enforce-uncertainty2
+    :precondition (not (uncertainty2))
+    :effect (uncertainty2)
+  )
+
+  (:action enforce-uncertainty3
+    :precondition (not (uncertainty3))
+    :effect (uncertainty3)
+  )
+
+  (:action enforce-uncertainty4
+    :precondition (not (uncertainty4))
+    :effect (uncertainty4)
+  )
+
+  (:action enforce-uncertainty5
+    :precondition (not (uncertainty5))
+    :effect (uncertainty5)
+  )
+
+  (:action enforce-uncertainty6
+    :precondition (not (uncertainty6))
+    :effect (uncertainty6)
+  )
+)

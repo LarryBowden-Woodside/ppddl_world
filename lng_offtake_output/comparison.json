@@ -1,0 +1,39 @@
+{
+  "approaches": [
+    "baseline",
+    "hybrid",
+    "adaptive"
+  ],
+  "synthesis_time": {
+    "baseline": 304.297926902771,
+    "hybrid": 29.561089277267456,
+    "adaptive": 0
+  },
+  "domain_size": {
+    "baseline": 1368,
+    "hybrid": 5553,
+    "adaptive": 0
+  },
+  "problem_size": {
+    "baseline": 523,
+    "hybrid": 1482,
+    "adaptive": 0
+  },
+  "planner_success": {
+    "baseline": false,
+    "hybrid": true,
+    "adaptive": true
+  },
+  "special_features": {
+    "hybrid": {
+      "constraints_extracted": 42,
+      "hallucination_reduction": "Deterministic constraint extraction"
+    },
+    "adaptive": {
+      "learning_iterations": 10,
+      "convergence_train1": 0.46542515635223936,
+      "convergence_train2": 5.449813510824697,
+      "adaptive_planning": "HHV uncertainty learning"
+    }
+  }
+}

@@ -1,0 +1,756 @@
+{
+  "rover_mission": [
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 1.9508074459525573,
+      "uncertainty": 0.07722142512104097,
+      "confidence_interval": [
+        1.7963645957104752,
+        2.1052502961946393
+      ],
+      "r_squared": 0.9855788426301241,
+      "n_samples": 10,
+      "metadata": {
+        "fit_quality": 0.961922916274776,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 1.9514967394886138,
+      "uncertainty": 0.05192545114112529,
+      "confidence_interval": [
+        1.8476458372063633,
+        2.0553476417708643
+      ],
+      "r_squared": 0.986897666023519,
+      "n_samples": 20,
+      "metadata": {
+        "fit_quality": 0.9740816232424762,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 1.9660927599452314,
+      "uncertainty": 0.05347784980606129,
+      "confidence_interval": [
+        1.8591370603331088,
+        2.073048459557354
+      ],
+      "r_squared": 0.9794580064526847,
+      "n_samples": 30,
+      "metadata": {
+        "fit_quality": 0.9735201881291752,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 1.996669143301875,
+      "uncertainty": 0.05865935632910561,
+      "confidence_interval": [
+        1.8816968048968281,
+        2.111641481706922
+      ],
+      "r_squared": 0.9679719548971706,
+      "n_samples": 40,
+      "metadata": {
+        "fit_quality": 0.971459863306699,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 1.9867147071909494,
+      "uncertainty": 0.05301448811771607,
+      "confidence_interval": [
+        1.882806310480226,
+        2.090623103901673
+      ],
+      "r_squared": 0.9679321716449613,
+      "n_samples": 50,
+      "metadata": {
+        "fit_quality": 0.974009055594415,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 1.9680384661838062,
+      "uncertainty": 0.09438013997211796,
+      "confidence_interval": [
+        1.7792781862395703,
+        2.1567987461280422
+      ],
+      "r_squared": 0.9811487749300946,
+      "n_samples": 10,
+      "metadata": {
+        "fit_quality": 0.9542381262026964,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 2.0019166486245554,
+      "uncertainty": 0.05683897574717595,
+      "confidence_interval": [
+        1.8882386971302034,
+        2.115594600118907
+      ],
+      "r_squared": 0.9859394175594022,
+      "n_samples": 20,
+      "metadata": {
+        "fit_quality": 0.972391586901179,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 2.0116537166382975,
+      "uncertainty": 0.054932175911047695,
+      "confidence_interval": [
+        1.901789364816202,
+        2.121518068460393
+      ],
+      "r_squared": 0.9808269868503863,
+      "n_samples": 30,
+      "metadata": {
+        "fit_quality": 0.9734188759784461,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 2.004078385055554,
+      "uncertainty": 0.04818057228875481,
+      "confidence_interval": [
+        1.9096444633695946,
+        2.0985123067415135
+      ],
+      "r_squared": 0.9802117009947414,
+      "n_samples": 40,
+      "metadata": {
+        "fit_quality": 0.97652315166352,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 2.0212305276435405,
+      "uncertainty": 0.04442492327499823,
+      "confidence_interval": [
+        1.934157678024544,
+        2.108303377262537
+      ],
+      "r_squared": 0.9792177422952052,
+      "n_samples": 50,
+      "metadata": {
+        "fit_quality": 0.9784935463195259,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 1.9670206212585004,
+      "uncertainty": 0.07505172112999847,
+      "confidence_interval": [
+        1.8169171789985035,
+        2.1171240635184976
+      ],
+      "r_squared": 0.9860810418605749,
+      "n_samples": 10,
+      "metadata": {
+        "fit_quality": 0.963247276028324,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 2.0282715852495645,
+      "uncertainty": 0.07974733743493162,
+      "confidence_interval": [
+        1.8687769103797014,
+        2.1877662601194277
+      ],
+      "r_squared": 0.9662756174415987,
+      "n_samples": 20,
+      "metadata": {
+        "fit_quality": 0.9621695343543805,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 1.9573901625084404,
+      "uncertainty": 0.1373861217015144,
+      "confidence_interval": [
+        1.6826179191054116,
+        2.232162405911469
+      ],
+      "r_squared": 0.9574437070763004,
+      "n_samples": 10,
+      "metadata": {
+        "fit_quality": 0.934414895405726,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 1.9369698656622438,
+      "uncertainty": 0.08003645346855957,
+      "confidence_interval": [
+        1.7768969587251247,
+        2.097042772599363
+      ],
+      "r_squared": 0.9674551000479414,
+      "n_samples": 20,
+      "metadata": {
+        "fit_quality": 0.9603191855625668,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 1.9471458353219866,
+      "uncertainty": 0.07143152793040436,
+      "confidence_interval": [
+        1.804282779461178,
+        2.090008891182795
+      ],
+      "r_squared": 0.9596026445475934,
+      "n_samples": 30,
+      "metadata": {
+        "fit_quality": 0.9646129352132872,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 1.9420502408834437,
+      "uncertainty": 0.06073408508209045,
+      "confidence_interval": [
+        1.8230114341225465,
+        2.061089047644341
+      ],
+      "r_squared": 0.9601964950622318,
+      "n_samples": 40,
+      "metadata": {
+        "fit_quality": 0.9696751745583936,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 1.9449806100399043,
+      "uncertainty": 0.052246661061945754,
+      "confidence_interval": [
+        1.8425771543584906,
+        2.047384065721318
+      ],
+      "r_squared": 0.9649269199587852,
+      "n_samples": 50,
+      "metadata": {
+        "fit_quality": 0.9738404027333746,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 1.9454398704986726,
+      "uncertainty": 0.12350450413606721,
+      "confidence_interval": [
+        1.6984308622265383,
+        2.192448878770807
+      ],
+      "r_squared": 0.9572710352446339,
+      "n_samples": 10,
+      "metadata": {
+        "fit_quality": 0.9403055463209972,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 1.9493917631299662,
+      "uncertainty": 0.07330323323474805,
+      "confidence_interval": [
+        1.80278529666047,
+        2.0959982295994624
+      ],
+      "r_squared": 0.9703798655121866,
+      "n_samples": 20,
+      "metadata": {
+        "fit_quality": 0.9637596210172605,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 1.9407662383433264,
+      "uncertainty": 0.06986221599041784,
+      "confidence_interval": [
+        1.8010418063624907,
+        2.080490670324162
+      ],
+      "r_squared": 0.9604187120393322,
+      "n_samples": 30,
+      "metadata": {
+        "fit_quality": 0.9652535425728033,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 1.9544809645298822,
+      "uncertainty": 0.06473085247767776,
+      "confidence_interval": [
+        1.8276084936736336,
+        2.0813534353861307
+      ],
+      "r_squared": 0.9556684435725743,
+      "n_samples": 40,
+      "metadata": {
+        "fit_quality": 0.967942515028657,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 1.9487838268664874,
+      "uncertainty": 0.052221336581402066,
+      "confidence_interval": [
+        1.8464300071669393,
+        2.0511376465660356
+      ],
+      "r_squared": 0.9640231956496174,
+      "n_samples": 50,
+      "metadata": {
+        "fit_quality": 0.9739024478620433,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 1.9567507673832352,
+      "uncertainty": 0.09703012169586295,
+      "confidence_interval": [
+        1.7626905239915094,
+        2.150811010774961
+      ],
+      "r_squared": 0.9766386802138599,
+      "n_samples": 10,
+      "metadata": {
+        "fit_quality": 0.9527553683005735,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 2.0492016387380665,
+      "uncertainty": 0.08894445773815042,
+      "confidence_interval": [
+        1.8713127232617657,
+        2.2270905542143673
+      ],
+      "r_squared": 0.9656319309211452,
+      "n_samples": 20,
+      "metadata": {
+        "fit_quality": 0.9584011317632898,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 2.0288679382265395,
+      "uncertainty": 0.06691666987880031,
+      "confidence_interval": [
+        1.895034598468939,
+        2.1627012779841404
+      ],
+      "r_squared": 0.9704594145733264,
+      "n_samples": 30,
+      "metadata": {
+        "fit_quality": 0.9680708267347686,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 2.0114856527892617,
+      "uncertainty": 0.05858229242844087,
+      "confidence_interval": [
+        1.8966643596295176,
+        2.126306945949006
+      ],
+      "r_squared": 0.9697465577139074,
+      "n_samples": 40,
+      "metadata": {
+        "fit_quality": 0.9717003045413178,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 2.0011849208984636,
+      "uncertainty": 0.054267716885867665,
+      "confidence_interval": [
+        1.8948201958021629,
+        2.107549645994764
+      ],
+      "r_squared": 0.9666603270415445,
+      "n_samples": 50,
+      "metadata": {
+        "fit_quality": 0.9735981671928159,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 2.0423272716126646,
+      "uncertainty": 0.10580231265181388,
+      "confidence_interval": [
+        1.830722646309037,
+        2.2539318969162925
+      ],
+      "r_squared": 0.9759109715672497,
+      "n_samples": 10,
+      "metadata": {
+        "fit_quality": 0.9507467736458549,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 2.0297328359616977,
+      "uncertainty": 0.06270170836067852,
+      "confidence_interval": [
+        1.9043294192403406,
+        2.1551362526830546
+      ],
+      "r_squared": 0.9826492077940442,
+      "n_samples": 20,
+      "metadata": {
+        "fit_quality": 0.9700340885067044,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 2.0279869216731763,
+      "uncertainty": 0.04631007923157423,
+      "confidence_interval": [
+        1.9353667632100278,
+        2.120607080136325
+      ],
+      "r_squared": 0.9855188056660693,
+      "n_samples": 30,
+      "metadata": {
+        "fit_quality": 0.9776743257058296,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 2.0210456434325117,
+      "uncertainty": 0.039006414814526796,
+      "confidence_interval": [
+        1.9445930703960392,
+        2.0974982164689844
+      ],
+      "r_squared": 0.9861867571035582,
+      "n_samples": 40,
+      "metadata": {
+        "fit_quality": 0.9810653256754498,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 2.0079827182622516,
+      "uncertainty": 0.04136932126952208,
+      "confidence_interval": [
+        1.9268988485739884,
+        2.089066587950515
+      ],
+      "r_squared": 0.9808808793940309,
+      "n_samples": 50,
+      "metadata": {
+        "fit_quality": 0.979813462757246,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 2.005426422298765,
+      "uncertainty": 0.11932358109175845,
+      "confidence_interval": [
+        1.7667792601152483,
+        2.2440735844822823
+      ],
+      "r_squared": 0.9653688573098145,
+      "n_samples": 10,
+      "metadata": {
+        "fit_quality": 0.9438411197075653,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 1.9928976878965248,
+      "uncertainty": 0.09105859487406545,
+      "confidence_interval": [
+        1.810780498148394,
+        2.1750148776446556
+      ],
+      "r_squared": 0.9572014297337113,
+      "n_samples": 20,
+      "metadata": {
+        "fit_quality": 0.9563049399707154,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 1.9831483327526884,
+      "uncertainty": 0.05648896471505423,
+      "confidence_interval": [
+        1.8701704033225799,
+        2.0961262621827967
+      ],
+      "r_squared": 0.9757516202458304,
+      "n_samples": 30,
+      "metadata": {
+        "fit_quality": 0.972304406874111,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 1.9876714402287352,
+      "uncertainty": 0.05059196377822242,
+      "confidence_interval": [
+        1.8885111912234192,
+        2.0868316892340513
+      ],
+      "r_squared": 0.9735489839706511,
+      "n_samples": 40,
+      "metadata": {
+        "fit_quality": 0.9751788882247676,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 1.9832842881756396,
+      "uncertainty": 0.04591874207597479,
+      "confidence_interval": [
+        1.893283553706729,
+        2.07328502264455
+      ],
+      "r_squared": 0.9729456111459341,
+      "n_samples": 50,
+      "metadata": {
+        "fit_quality": 0.9773710459764683,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 1.9944259146427321,
+      "uncertainty": 0.12262878696061204,
+      "confidence_interval": [
+        1.749168340721508,
+        2.2396834885639563
+      ],
+      "r_squared": 0.9702044045761747,
+      "n_samples": 10,
+      "metadata": {
+        "fit_quality": 0.9420757588985587,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 1.9873523734274,
+      "uncertainty": 0.0912261253518272,
+      "confidence_interval": [
+        1.8049001227237456,
+        2.1698046241310545
+      ],
+      "r_squared": 0.9647616729410922,
+      "n_samples": 20,
+      "metadata": {
+        "fit_quality": 0.9561112917287439,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 1.975216533099036,
+      "uncertainty": 0.06827108548060958,
+      "confidence_interval": [
+        1.838674362137817,
+        2.1117587040602555
+      ],
+      "r_squared": 0.9693990399560108,
+      "n_samples": 30,
+      "metadata": {
+        "fit_quality": 0.9665908983935698,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 1.9728979553522343,
+      "uncertainty": 0.06164849237481684,
+      "confidence_interval": [
+        1.8520669102975933,
+        2.093729000406875
+      ],
+      "r_squared": 0.9666688191054267,
+      "n_samples": 40,
+      "metadata": {
+        "fit_quality": 0.9696991472258158,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 1.9745385826722608,
+      "uncertainty": 0.053089140631848594,
+      "confidence_interval": [
+        1.8704838670338375,
+        2.078593298310684
+      ],
+      "r_squared": 0.9682624427149451,
+      "n_samples": 50,
+      "metadata": {
+        "fit_quality": 0.9738171164155631,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 2.0073216704583783,
+      "uncertainty": 0.12448268675248783,
+      "confidence_interval": [
+        1.7583562969534026,
+        2.2562870439633538
+      ],
+      "r_squared": 0.968990574339661,
+      "n_samples": 10,
+      "metadata": {
+        "fit_quality": 0.9416068898013916,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 2.032339728839872,
+      "uncertainty": 0.06889650050753152,
+      "confidence_interval": [
+        1.894546727824809,
+        2.170132729854935
+      ],
+      "r_squared": 0.9807904342487656,
+      "n_samples": 20,
+      "metadata": {
+        "fit_quality": 0.9672114446032899,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 2.0107434087186196,
+      "uncertainty": 0.05433688803915879,
+      "confidence_interval": [
+        1.902069632640302,
+        2.119417184796937
+      ],
+      "r_squared": 0.9808558006826774,
+      "n_samples": 30,
+      "metadata": {
+        "fit_quality": 0.9736877601687117,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 1.995082567949115,
+      "uncertainty": 0.06264764806248123,
+      "confidence_interval": [
+        1.8722931777466518,
+        2.117871958151578
+      ],
+      "r_squared": 0.9653641194437346,
+      "n_samples": 40,
+      "metadata": {
+        "fit_quality": 0.9695549749063275,
+        "true_cost": 2.0
+      }
+    },
+    {
+      "scenario_name": "rover_mission",
+      "parameter_name": "energy_cost",
+      "estimated_value": 1.9963489205389484,
+      "uncertainty": 0.05147182743157347,
+      "confidence_interval": [
+        1.8954641387730644,
+        2.097233702304832
+      ],
+      "r_squared": 0.9703154879958712,
+      "n_samples": 50,
+      "metadata": {
+        "fit_quality": 0.9748650718171576,
+        "true_cost": 2.0
+      }
+    }
+  ]
+}

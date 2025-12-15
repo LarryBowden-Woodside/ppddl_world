@@ -1,0 +1,27 @@
+{
+    "initial_state":
+    {
+        "robot1" : "outside",
+        "robot2" : "outside"
+    },
+    "end_state":
+    {
+        "maintenance_constraint" : "true",
+        "goal_constraint" : "robot1l[i+1]==rescuedPerson1"
+    },
+    "constraints":
+    {
+        "episodes":
+        {
+
+        },
+        "temporal":
+        {
+
+        },
+        "event":
+        {
+ 
+        }
+    }
+}
