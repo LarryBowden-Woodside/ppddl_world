@@ -14,6 +14,8 @@ Main features:
 Requires Python 3.8+. Install dependencies:
 
 ```bash
+./setup_planner_path.sh
+./configure_planner.sh
 pip install -r requirements.txt
 ```
 
