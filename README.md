@@ -14,6 +14,10 @@ Main features:
 Requires Python 3.8+. Install dependencies:
 
 ```bash
+sudo apt install python3-venv
+python3 -m venv .venv
+source .venv/bin/activate
+
 ./setup_planner_path.sh
 ./configure_planner.sh
 pip install -r requirements.txt
